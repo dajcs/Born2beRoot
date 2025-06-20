@@ -1,9 +1,9 @@
 # Born2beRoot
 
-42 school Born2beRoot project
+## 42 school Born2beRoot project
 
-- [Virtual Machine creation and Debian installation](./Install.md)
-- [Debian configuration](./Debian.md)
+- [Virtual Machine creation and Debian installation](./VM_Install.md)
+- [Debian configuration](./Debian_config.md)
 - [Monitoring script](./monitoring.sh)
-- [Debian evaluation](./Evaluation.md)
-- [Bonus LLMP stack setup](./LLMP.md)
+- [Project evaluation](./Evaluation.md)
+- [Bonus setup](./LLMP.md)
