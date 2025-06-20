@@ -1,36 +1,43 @@
-# Debian
 
-Guide for the **Debian** version of the project.
+# Debian setup
 
-Login as `msousa` then login as `root` to install `vim`.
+After reboot enter HD decrypt password and login with user `anemet`
+
+
+## 0 - Installing sudo & adding it in groups
+
+
+First we need to install sudo.
 
 ```bash
-su - # ?
-apt-get install vim
+# 1) Become root (if you aren’t already)
+su -
+
+# 2) Pull the package
+apt update
+apt install -y sudo
+
+# 3) Grant your user sudo rights
+usermod -aG sudo anemet
+
+# 4) Reload group membership
+exit                        # leave the root shell
+exec su - anemet            # log again in to get the sudo superpowers
 ```
 
-Verify any package installation with `dpkg`
+Test:
 
 ```bash
-dpkg -l | grep $PACKAGE_NAME
+sudo -v                     # should ask for your password, then succeed
 ```
+`sudoers` is already set up so anyone in the sudo group gains full sudo access; no manual editing needed.
 
-Shutdown from the terminal
-
-```bash
-shutdown -f now
-```
-
-## 1 - Installing sudo & adding it in groups
+Since we are working with groups, the project asks us to create group `user42` and add the login user to it:
 
 ```bash
-apt-get install sudo
-sudo adduser msousa sudo
-sudo reboot
-sudo -v # validate: update user's timestamp without running a command
 sudo addgroup user42
-sudo adduser msousa user42
-sudo apt-get update
+sudo adduser anemet user42
+groups anemet    # check result
 ```
 
 Verify if user was successfully added to **sudo** group.
@@ -39,59 +46,110 @@ Verify if user was successfully added to **sudo** group.
 getent group sudo
 ```
 
+
+## 1 - Install `vim` - might come handy later
+
+
+```bash
+sudo apt install vim
+echo "set number" ~/.vimrc  # to display line number by default
+```
+
+
+
 ## 2 - Installing SSH
 
 ```bash
-sudo apt-get install openssh-server
-sudo vi /etc/ssh/sshd_config
+sudo apt install -y openssh-server
 ```
 
-`#Port 22` to `Port 4242` and
+Edit `/etc/ssh/sshd_config` (use the newly installed `vim`):
+
+```bash
+sudo vim /etc/ssh/sshd_config
+```
+
+
+Change `#Port 22` to `Port 4242` and \
 `#PermitRootLogin prohibit-password` to `PermitRootLogin no`
+
+```bash
+# Change #Port 22 to
+Port 4242
+
+# Change #PermitRootLogin prohibit-password to
+PermitRootLogin no
+```
 
 Diference between `sshd_config` and `ssh_config`?
 
+- `ssh_config` - configures the client
+- `sshd_config` - configures the server
+
+Start the service and enable it on boot:
+
 ```bash
-sudo vi /etc/ssh/ssh_config
+sudo systemctl restart ssh
+sudo systemctl enable  ssh      # start on boot
 ```
 
-`#Port 22` to `Port 4242`
+Verify it is listening:
 
 ```bash
-sudo reboot # for changes to take effect
-sudo service ssh status
+ss -lnt | grep 4242
 ```
 
-Apply port forwarding rule on VirtualBox can be `4242:4242`.
 
-`ssh` into VM
+Test `ssh` into VM
 
 ```bash
-ssh msousa@127.0.0.1 -p 4242 # or
-ssh msousa@0.0.0.0 -p 4242 # or
-ssh msousa@localhost -p 4242
+ssh anemet@127.0.0.1 -p 4242 # or
+ssh anemet@0.0.0.0 -p 4242 # or
+ssh anemet@localhost -p 4242
+```
+
+Test that `root` ssh is not permitted:
+
+```bash
+ssh root@127.0.0.1 -p 4242
 ```
 
 ## 3 - Installing UFW
 
-```bash
-sudo apt-get install ufw
-sudo ufw enable
-sudo ufw allow 4242
-sudo ufw status
-```
-
-List rules numbered
+UFW - Uncomplicated FireWall
 
 ```bash
-sudo ufw status numbered
+sudo apt install -y ufw
+
+# default deny everything
+sudo ufw default deny incoming
+sudo ufw default allow outgoing
+
+# allow SSH on 4242/tcp only
+sudo ufw allow 4242/tcp comment 'SSH service'
+
+# enable and make persistent
+sudo ufw enable      # answers “y” to the prompt
+sudo systemctl enable ufw
 ```
 
-Delete rule
+Quick sanity check:
 
 ```bash
-sudo ufw delete $NUMBER
+sudo ufw status verbose
 ```
+you should see:
+
+```vbnet
+Status: active
+To                         Action      From
+--                         ------      ----
+4242/tcp                   ALLOW       Anywhere           # SSH service
+4242/tcp (v6)              ALLOW       Anywhere (v6)      # SSH service
+```
+
+## TODO: To be continued
+
 
 ## 4 - Configuring sudo
 

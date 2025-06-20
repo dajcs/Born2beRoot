@@ -121,7 +121,7 @@ Run the virtual machine and follow the OS install wizard.
     `Finish` \
     <BR>
 
-    `Configure Encrypted Volumes`
+- Select every partition and configure **Use as** and **Mount point** accoring to the table below:
 
 12. | Select | Use as: | Mount point: | Done setting up the partition |
     | --- | --- | --- | --- |
