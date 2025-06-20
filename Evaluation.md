@@ -10,6 +10,15 @@ sha1sum ~/VirtualBox\ VMs/Born2beRoot/Born2beRoot.vdi > signature.txt
 
 A virtual machine uses software emulation of hardware to create an isolated environment on top of hardware where a separate system with its own OS can be run. Therefore allowing for things like running Debian inside a Mac.
 
+In order to run a separate secondary OS on your machine, you’ll need a Virtual Machine. It's like a computer program that acts like a separate computer, so a virtual computer inside a real computer. It runs inside your physical computer but is isolated from it. It has its own "virtual" hardware (lCPU, memory, storage…) that is simulated by software (hypervisors).
+
+### Virtualization and the Hypervisor(VMM)
+Virtualization is the process of creating a virtual machine on a physical machine with the help of hypervisors which are a lightweight software layer. The hypervisor acts like an intermediate or also referred to as virtualization layer between the physical hardware of the host the machine and the virtual machines and the applications running on them. Think of the hardware as a restaurant which have appliances (stove, oven…), the chef is the hypervisor taking orders (processes) from the customers (OS and apps) of each table(VM) in the restaurant.
+
+The **virtual machine manager** or **monitor** is a software that enables the creation and management of virtual machines. It manages the backend operation of these VMs by allocating the necessary computing, memory, storage and input/output resources. It also offers an interface that manages the status and availability of VMs that are installed over a single host or interconnected hosts. (VirtualBox is a type-2 hypervisor)
+
+
+
 ## Choice of Operating System
 
 It's easier to install and configure than CentOS (and I haven't used CentOS before). I use Ubuntu and Pop OS for personal use which are both Debian flavours and wanted to understand them more deeply.
@@ -20,20 +29,64 @@ CentOS vs Debian are two flavors of Linux operating systems. CentOS, as said abo
 
 Debian uses Linux as its Kernel. Fedora, CentOS, Oracle Linux are all different distribution from Red Hat Linux and are variant of RedHat Linux. Ubuntu, Kali, etc., are variant of Debian. CentOS vs Debian both are used as internet servers or web servers like web, email, FTP, etc.
 
+
 ## The purpose of virtual machines
 
 VMs may be deployed to accommodate different levels of processing power needs, to run software that requires a different operating system, or to test applications in a safe, sandboxed environment.
 
+Hypervisors are of two types, the **first one** being the **bare-metal** hypervisors, they don’t need to load an underlaying OS that exists on the host machine, but instead have direct contact with the hardware through their own integrated kernel. Microsoft designates **Hyper-V** as a Type 1 hypervisor. Hyper-V installs on Windows but runs directly on the physical hardware, inserting itself underneath the host OS. All guest operating systems then run through the hypervisor, but the host operating system gets special access to the hardware, giving it a performance advantage.
+
+**The second** type are the hosted hyper-vs, they need the host machine kernel’s (OS) to establish the connection between the hardware and the VM. A Type 2 hypervisor doesn’t run directly on the underlying hardware. Instead, it runs as an application in an OS (**VirtualBox**, **VMware Fusion**). Type 2 hypervisors rarely show up in server-based environments. Instead, they’re suitable for individual PC users needing to run multiple operating systems.
+
+**Type 1 or type 2 ?**
+
+A Type 2 hypervisor may function **slower** than a Type 1, as all of its commands must be filtered through the host computer’s operating system, creating a lag time which makes hyper-v of type 1 more **efficient**. It also introduces potential security risks if an attacker compromises the host OS because they could then manipulate any guest OS running in the Type 2 hypervisor.
+
+
+
 ## The difference between `aptitude` and `apt`
 
-Aptitude is a higher-level package manager while APT is lower-level package manager which can be used by other 
+Aptitude is a higher-level package manager while APT is lower-level package manager which can be used by other
 higher-level package managers.
 
-Aptitude is vaster in functionality than **apt-get** and integrates functionalities of **apt-get** and its other variants including **apt-mark** and **apt-cache**.
+Aptitude has more functionality than **apt-get** and integrates functionalities of **apt-get** and its other variants including **apt-mark** and **apt-cache**.
 
 [Read more](https://www.tecmint.com/difference-between-apt-and-aptitude/)
 
+
+**dpkg** is the core infrastructure that handles package installation, removal, and updates within a Linux distribution in Debian-based distributions like Ubuntu. It handles Managing package files, Resolving dependencies, Maintaining package state and Performing updates.
+
+**Aptitude** and **apt** itself doesn't handle these core tasks directly. Instead, it builds upon **dpkg** and other tools, providing a more user-friendly interface and advanced features. However, the security of those features ultimately depends on the underlying package management system's robustness and trustworthiness.
+
+Imagine **dpkg** as the foundation of a house, responsible for the structural integrity. **Aptitude** and **apt** is like an architect who designs and builds the house on top of that foundation, adding features and functionality. While the architect can make the house beautiful and functional, its overall security depends on the quality of the foundation materials and construction techniques.
+
+**apt-get** or **apt** (Advanced package tool) is a lower level package manager that comes by default and lacks UI so it’s restricted only to command line. To install a package, you need to specify the name of the package just after the **apt install** command. The package manager reads the /etc/apt/sources.list file and the contents of the /etc/apt/sources.list.d folder to retrieve the ones that you need with all the dependencies. It combines functionalities from **apt-get** and **apt-cache**. Comes by default.
+
+**Aptitude** is a higher-level tool which has a default text-only interactive interface along with option of command-line. (includes the **ncurses** library for GUI-like) It doesn't come by default, so you need to install it with the apt command.
+
+- **Installation** : While removing any installed package, **Aptitude** will automatically remove unused packages, while **apt** would need user to explicitly specify this by either adding additional option of **—auto-remove** or specifying **apt autoremove**.
+- aptitude has the **why** and **why-not** commands to tell you which manually installed packages are preventing an action that you might want to take.
+- When facing a **package conflict**, apt will not fix the issue while aptitude will suggest a resolution that can do the job.
+
+
+
+
 ## What is APPArmor
+
+
+
+**AppArmor (on Debian) vs SELinux (on CentOS)**
+
+**SELinux** stands for Security-Enhanced Linux. It uses **labels** to assign security contexts to processes and resources (objects), and checks these labels against a set of policies to determine whether an access request is allowed or denied. Imagine a label (Security context) on each object and process in your system, like a name tag that holds details about the object's role, permissions, and origin. SELinux has a set of pre-defined rules or policies that dictate how objects with specific contexts can interact with each other.
+
+**AppArmor** stands for Application Armor and uses profiles to define and enforce rules for processes and resources. Profiles are files that specify the permissions and restrictions for each process or application, such as which files, directories, sockets, ports, and devices it can access, and how. Takes a **path-based** approach. It defines profiles for applications, specifying which files and directories they can access (read, write, execute). Imagine each profile like a map given to the app, it specifies which areas is it allowed to access, which it’s not authorized to, which resources it can use…
+
+**SELinux** is more complex and difficult to learn, configure, manage and troubleshoot because of labels, security contexts, policies, and modes. **AppArmor**, on the other hand, is simpler and more intuitive due to profiles that are easier to create, modify, and debug.
+
+Run ```aa-status``` to check if **AppArmor** is running.
+
+
+
 
 Check APPArmor status
 
@@ -51,7 +104,7 @@ Profiles can allow capabilities like network access, raw socket access, and the 
 - [x] Script running every 10min
 - [x] No graphical user interface
 - [x] Password requested on boot up
-- [x] Login with `msousa`
+- [x] Login with `anemet`
 - [x] Password must follow rules
 
 ## Check that the UFW service is started
@@ -72,24 +125,39 @@ sudo service ssh status
 cat /etc/os-release | grep PRETTY_NAME
 ```
 
-## Check that `msousa` is member of `sudo` and `user42` groups
+## Check that `anemet` is member of `sudo` and `user42` groups
 
 ```bash
-groups msousa
+groups anemet
 ```
 
 ## Check password policy rules
 
-Password expiry: line 160 and 161.
+Password expiry: line ~164
 
 ```bash
-vi /etc/login.defs
+vim /etc/login.defs
+```
+```
+PASS_MAX_DAYS   30   # expire after 30 days
+PASS_MIN_DAYS    2   # must wait 2 days before changing again
+PASS_WARN_AGE    7   # 7-day heads-up e-mail + login banner
 ```
 
 Password policy: line 25.
 
 ```bash
-vi /etc/pam.d/common-password
+vim /etc/security/pwquality.conf
+```
+```
+minlen          = 10        # ≥10 chars
+ucredit         = -1        # at least 1 uppercase
+lcredit         = -1        # at least 1 lowercase
+dcredit         = -1        # at least 1 digit
+maxrepeat       = 3         # no “aaaa”, “1111”…
+usercheck       = 1         # forbid name inside password
+difok           = 7         # ≥7 chars different from previous
+enforce_for_root            # root must obey (except difok)
 ```
 
 ### Create a new user
@@ -105,7 +173,7 @@ Confirm it follows the password policy
 ### Explain how password rules were setup
 
 ```bash
-vi /etc/pam.d/common-password
+vim /etc/security/pwquality.conf
 ```
 
 ## Create group `evaluating` and add created user
@@ -129,11 +197,11 @@ Password complexity rules try to enforce this “difficult to crack” requireme
 
 How much better is a 15 character password than a 30 character password if hackers know that longer password is frequently used? And is it better if the user can’t remember the password? Password complexity only scales up to a certain point. Beyond a certain point, a complex password can be difficult to crack if the number of possible combinations is extremely high, but it can also be too complex to be useful to users.
 
-## Check that the hostname of the machine is `msousa42`
+## Check that the hostname of the machine is `anemet42`
 
 ```bash
 uname -n
-# or 
+# or
 hostname
 ```
 
@@ -142,14 +210,14 @@ hostname
 ```bash
 sudo adduser new_user sudo
 sudo login new_user
-sudo vi /etc/hostname # change to new_user42
+sudo vim /etc/hostname # change to new_user42
 sudo reboot
 ```
 
 ### Restore original hostname
 
 ```bash
-sudo vi /etc/hostname # change to msousa42
+sudo vim /etc/hostname # change to anemet42
 sudo reboot
 ```
 
@@ -163,11 +231,11 @@ lsblk
 
 ```bash
 NAME                    MAJ:MIN RM  SIZE RO TYPE  MOUNTPOINT
-sda                       8:0    0    8G  0 disk  
+sda                       8:0    0    8G  0 disk
 |-sda1                    8:1    0  476M  0 part  /boot
-|-sda2                    8:2    0    1K  0 part  
-`-sda5                    8:5    0  7.5G  0 part  
-  `-sda5_crypt          254:0    0  7.5G  0 crypt 
+|-sda2                    8:2    0    1K  0 part
+`-sda5                    8:5    0  7.5G  0 part
+  `-sda5_crypt          254:0    0  7.5G  0 crypt
     |-LVMGroup-root     254:1    0  1.9G  0 lvm   /
     |-LVMGroup-swap     254:2    0  952M  0 lvm   [SWAP]
     |-LVMGroup-home     254:3    0  952M  0 lvm   /home
@@ -216,10 +284,53 @@ sudo apt-get update
 ## Show the implementation of the subject rules
 
 ```bash
-vi /etc/sudoers.d/sudoconfig
+# vim /etc/sudoers.d/sudoconfig
+sudo visudo
 ```
 
-[What is TTY](https://www.howtogeek.com/428174/what-is-a-tty-on-linux-and-how-to-use-the-tty-command/)
+```bash
+###############################################################################
+##  Hardening rules – required by born2beRoot
+###############################################################################
+
+# 3 attempts max
+Defaults        passwd_tries=3
+
+# Custom error on bad password
+Defaults        badpass_message="Access denied: incorrect password."
+
+# Full I/O logging (command, stdin, stdout, stderr)
+Defaults        log_input, log_output
+Defaults        iolog_dir=/var/log/sudo/%{user}         # sub-dir per user
+Defaults        iolog_file=%{command}_%T                # file per run (timestamp)
+
+# Force an attached TTY
+Defaults        requiretty
+
+# Tight PATH in sudo context
+Defaults secure_path="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/snap/bin"
+```
+
+### Why **Force an attached TTY** ?
+| Scenario                                                                                                  | TTY present?                                | Works with *requiretty*? |
+| --------------------------------------------------------------------------------------------------------- | ------------------------------------------- | ------------------------ |
+| You’re at an interactive shell prompt and type `./myscript.sh` (or `myscript.sh` calls `sudo` inside)     | **Yes** – the script inherits your terminal | ✅                        |
+| You run `ssh -t server "sudo systemctl restart apache2"` (note `-t` forces a pseudo-tty)                  | **Yes**                                     | ✅                        |
+| You run a cron job, systemd timer, or non-interactive SSH command like `ssh server sudo reboot` (no `-t`) | **No**                                      | ❌ – sudo will refuse     |
+| A web application, CI job, or any daemon tries `sudo something`                                           | **No**                                      | ❌                        |
+
+
+
+- Regular scripts you launch by hand are fine. They’re children of your interactive shell, so they inherit the same TTY. Nothing to change.
+- Automation without a terminal fails. If you really need a specific daemon, cron job, or CI user to run sudo, either:
+    - Add `ssh -tt` / `ansible_ssh_extra_args: -tt` / similar so it gets a pseudo-tty, or
+    - Give that account an exception in `sudoers`:
+        ```
+        Defaults:jenkins !requiretty
+        ```
+
+**Conclusion**: `requiretty` blocks only the headless, background sudo calls; anything you execute personally from a normal shell keeps working.
+
 
 ## Verify that the `/var/log/sudo/` folder exists and has a file
 
@@ -232,24 +343,14 @@ Has file `seq`.
 ### Check contents of files in this folder
 
 ```bash
-sudo ls /var/log/sudo/00/00
-# run sudo command
-sudo ls /var/log/sudo/00/00/<newfolder> 
-```
-
-### Check there is a history of commands using sudo
-
-```bash
-sudo cat /.../log # Input log
-sudo cat /.../ttyout # Output log
-```
-
-### Run a command using sudo and check if files updated
-
-```bash
 sudo apt update
-sudo ls /var/log/sudo/00/00 # should have new folder
+sudo ls -lrt /var/log/sudo/anemet
+
+# run sudo replay
+sudo sudoreplay /var/log/sudo/anemet/ls...
+sudo sudoreplay /var/log/sudo/anemet/apt...
 ```
+
 
 ## Check that UFW is properly installed
 
@@ -269,7 +370,7 @@ Uncomplicated Firewall is a program for managing a netfilter firewall designed t
 
 UFW aims to provide an easy to use interface for people unfamiliar with firewall concepts, while at the same time simplifies complicated iptables commands to help an administrator who knows what he or she is doing.
 
-[Read more](https://wiki.ubuntu.com/UncomplicatedFirewall)
+[https://wiki.ubuntu.com/UncomplicatedFirewall](https://wiki.ubuntu.com/UncomplicatedFirewall)
 
 ### List active rules should include one for port 4242
 
@@ -316,29 +417,29 @@ Secure Shell (SSH) is a cryptographic network protocol for operating network ser
 
 SSH provides password or public-key based authentication and encrypts connections between two network endpoints. It is a secure alternative to legacy login protocols (such as telnet, rlogin) and insecure file transfer methods (such as FTP).
 
-[Read more](https://en.wikipedia.org/wiki/Secure_Shell)
+[https://en.wikipedia.org/wiki/Secure_Shell](https://en.wikipedia.org/wiki/Secure_Shell)
 
 ### Verify that the SSH service only uses port 4242
 
 ```bash
 sudo service ssh status | grep listening
 # or check configs
-sudo vi /etc/ssh/sshd_config
-sudo vi /etc/ssh/ssh_config 
+sudo vim /etc/ssh/sshd_config
+# sudo vim /etc/ssh/ssh_config
 ```
 
 ### Login with SSH from host machine
 
 ```bash
-ssh msousa@127.0.0.1 -p 4242 # or
-ssh msousa@0.0.0.0 -p 4242 # or
-ssh msousa@localhost -p 4242
+ssh anemet@127.0.0.1 -p 4242 # or
+ssh anemet@0.0.0.0 -p 4242 # or
+ssh anemet@localhost -p 4242
 ```
 
 ### Make sure you cannot SSH login with root user
 
 ```bash
-msousa@msousa42:~$ login root
+anemet@anemet42:~$ login root
 login: Cannot possibly work without effective root
 ```
 
@@ -354,7 +455,7 @@ uname (short for unix name) is a computer program in Unix and Unix-like computer
 
 ### physical_cpu
 
-[Read more](https://www.cyberciti.biz/faq/check-how-many-cpus-are-there-in-linux-system/)
+[https://www.cyberciti.biz/faq/check-how-many-cpus-are-there-in-linux-system/](https://www.cyberciti.biz/faq/check-how-many-cpus-are-there-in-linux-system/)
 
 ```bash
 physical_cpu=$(grep "physical id" /proc/cpuinfo | sort | uniq | wc -l)
@@ -366,11 +467,11 @@ Use `/proc/cpuinfo` file that lists CPUs.
 
 ### virtual_cpu
 
-[Read more](https://webhostinggeeks.com/howto/how-to-display-the-number-of-processors-vcpu-on-linux-vps/)
+[https://webhostinggeeks.com/howto/how-to-display-the-number-of-processors-vcpu-on-linux-vps/](https://webhostinggeeks.com/howto/how-to-display-the-number-of-processors-vcpu-on-linux-vps/)
 
 If your processors are multi-core, you need to know how many virtual processors you have. You can count those by looking for lines that start with "processor".
 
-[Read more](https://www.networkworld.com/article/2715970/counting-processors-on-your-linux-box.html)
+[https://www.networkworld.com/article/2715970/counting-processors-on-your-linux-box.html](https://www.networkworld.com/article/2715970/counting-processors-on-your-linux-box.html)
 
 ```bash
 virtual_cpu=$(grep -c ^processor /proc/cpuinfo)
@@ -382,7 +483,7 @@ virtual_cpu=$(grep -c ^processor /proc/cpuinfo)
 
 [`awk` built-in variables](https://www.thegeekstuff.com/2010/01/8-powerful-awk-built-in-variables-fs-ofs-rs-ors-nr-nf-filename-fnr/)
 
-[Read more](https://linuxcommando.blogspot.com/2008/04/using-awk-to-extract-lines-in-text-file.html)
+[https://linuxcommando.blogspot.com/2008/04/using-awk-to-extract-lines-in-text-file.html](https://linuxcommando.blogspot.com/2008/04/using-awk-to-extract-lines-in-text-file.html)
 
 ```bash
 memory_usage=$(free -m | awk 'NR==2{printf "%s/%sMB (%.2f%%)\n", $3,$2,$3*100/$2 }')
@@ -502,7 +603,7 @@ mac_address=$(ip link show | awk '$1 == "link/ether" {print $2}')
 sudo_commands_count=$(journalctl _COMM=sudo | grep -c COMMAND)
 ```
 
-[Read more](https://www.digitalocean.com/community/tutorials/how-to-use-journalctl-to-view-and-manipulate-systemd-logs)
+[https://www.digitalocean.com/community/tutorials/how-to-use-journalctl-to-view-and-manipulate-systemd-logs](https://www.digitalocean.com/community/tutorials/how-to-use-journalctl-to-view-and-manipulate-systemd-logs)
 
 If a file path refers to an executable script, a "_COMM=" match for the script name is added to the query.
 
@@ -510,7 +611,7 @@ If a file path refers to an executable script, a "_COMM=" match for the script n
 
 The cron command-line utility, also known as cron job is a job scheduler on Unix-like operating systems. Users who set up and maintain software environments use cron to schedule jobs (commands or shell scripts) to run periodically at fixed times, dates, or intervals. It typically automates system maintenance or administration—though its general-purpose nature makes it useful for things like downloading files from the Internet and downloading email at regular intervals.
 
-[Read more](https://en.wikipedia.org/wiki/Cron)
+[https://en.wikipedia.org/wiki/Cron](https://en.wikipedia.org/wiki/Cron)
 
 ### How to set up the script to run every 10mins
 
@@ -521,7 +622,7 @@ sudo crontab -e
 Add following line
 
 ```
-*/10 * * * * /home/monitoring.sh
+*/10 * * * * /usr/local/bin/monitoring.sh
 ```
 
 ### Verify correct functioning of the script
