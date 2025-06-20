@@ -2,11 +2,11 @@
 
 Guide to install the **Debian** version of the project.
 
-We have installed in 42 Luxembourg the [**VirtualBox v7.0**](https://www.virtualbox.org/wiki/Downloads).
+We have installed on workstations in 42 Luxembourg the [**VirtualBox v7.0**](https://www.virtualbox.org/wiki/Downloads).
 
 Download the [**Debian**](https://www.debian.org/download) image.
 
-At the time of writing the latest stable version: [debian-12.11.0-amd64-netinst.iso](https://cdimage.debian.org/debian-cd/current/amd64/iso-cd/debian-12.11.0-amd64-netinst.iso)
+At the time of this writing the latest stable version: [debian-12.11.0-amd64-netinst.iso](https://cdimage.debian.org/debian-cd/current/amd64/iso-cd/debian-12.11.0-amd64-netinst.iso)
 
 
 ## Virtual Machine Settings
@@ -17,8 +17,8 @@ Launch **VirtualBox** and follow the create wizard:
 
 1. Create a new Virtual Machine
 2. Name: **Born2beRoot**
-3. Folder: <where you have space for about 5..10 GB>, I'm using a USB stick
-4. ISO Image: debian-12.11.0-amd64-netinst.iso
+3. Folder: <need a space for about 5..10 GB>, I'm using a USB stick
+4. ISO Image: **debian-12.11.0-amd64-netinst.iso**
 
 5. Type: **Linux** (autofilled from ISO image)
 6. Version: **Debian (64-bit)** (autofilled from ISO image)
@@ -38,7 +38,7 @@ we don't / can't set here anything
 
 0. Create a Virtual HD Now:
 
-1. HD File Location: **<path>/Born2beRoot/Born2beRoot.vdi**
+1. HD File Location: **\<path\>/Born2beRoot/Born2beRoot.vdi**
 2. HD Size: **31 GB** (this is the max size, the .vdi file is dinamically growing)
 
 3. HD File Type: **VDI**
@@ -69,9 +69,7 @@ Run the virtual machine and follow the OS install wizard.
     Re-enter: ...
 
 
-### Partition setup
-
-For bonus part:
+### Partition setup - for Bonus part
 
 1.  Partition method: **Manual**
 2.  `SCSIX (0,0,0) (sda) -> 33.3 GB ATA VBOX HARDDISK`
@@ -107,6 +105,8 @@ For bonus part:
     **LVMGroup** \
     Devices for new volume group: `[*] /dev/mapper/sda5_crypt` \
     Volume group: `LVMGroup` \
+    <BR>
+
     `Create Logical Volume` - `group` - `name` - `size` (see table below)
 11. | Create logical volume | [ **LVMGroup** ] | name | size |
     | --- | --- | --- | --- |
@@ -119,6 +119,7 @@ For bonus part:
     | --> | LVMGroup | `var-log` | 6471M (Remaining) |
 
     `Finish` \
+    <BR>
 
     `Configure Encrypted Volumes`
 
@@ -134,14 +135,26 @@ For bonus part:
 
     scroll down to:
 13. `Finish partitioning and write changes to disk?` **Yes**
-14. `Write changes to disk?` **Yes**
+14. `Write changes to disk?` **Yes** \
+<BR>
+
+Wait to finish install (can take up to 1 hour)
+
 ### Final Steps
 
-- Scan another CD or DVD? **NO**
-- Debian archive mirror country: **Belgium**
+- Scan extra installation media? **NO**
+- Debian archive mirror country: **Luxembourg**
 - `deb.debian.org`
 - Leave proxy info field empty.
+- *up to 10 min install*
 - Participate in the package usage survey? **NO**
-- Unselect SSH server & standart system utilities
+- **Choose software to install** - Unselect:
+    - [ ] Debian desktop environment
+    - [ ] ... Gnome
+    - ...
+    - [ ] web server
+    - [ ] SSH server
+    - [*] standard system utilities - this can be left selected
+
 - GRUB **YES**
 - Device for boot loader installation: `/dev/sda`
