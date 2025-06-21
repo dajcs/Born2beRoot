@@ -81,7 +81,7 @@ Port 4242
 PermitRootLogin no
 ```
 
-Diference between `sshd_config` and `ssh_config`?
+Difference between `sshd_config` and `ssh_config`?
 
 - `ssh_config` - configures the client
 - `sshd_config` - configures the server
@@ -93,7 +93,16 @@ sudo systemctl restart ssh
 sudo systemctl enable  ssh      # start on boot
 ```
 
-Verify it is listening:
+### Note: What is `systemctl`?
+
+- `systemctl` is the Swiss-army knife for systemd, the init system and service manager that boots Debian (and most modern Linux distros) and keeps everything running
+- Old Debian used a pile of SysV init scripts in `/etc/init.d/`. They were simple but brittle and slow. Systemd replaced that with:
+    - **Units** - declarative files (`*.service`, `*.socket`, `*.mount`, …) that describe how to start, stop, order, and monitor things.
+    - **cgroups** + **journald** - process tracking and unified logging
+    - **Parallel boot** - starts independent units at the same time, shaving seconds off boot
+    - `systemctl` is the CLI frontend to summon these units, in our case it spared us a restart
+
+Verify SSH listening:
 
 ```bash
 ss -lnt | grep 4242
@@ -148,26 +157,100 @@ To                         Action      From
 4242/tcp (v6)              ALLOW       Anywhere (v6)      # SSH service
 ```
 
-## TODO: To be continued
 
 
 ## 4 - Configuring sudo
 
+- `sudo` must be installed following these rules:
+    - authentication using sudo has to be limited to 3 attempts in the event of an incorrect password.
+    - a custom message has to be displayed if an error due to a wrong password occurs when using sudo
+    - each action using sudo has to be archived, both inputs and outputs. The log file has to be saved in the `/var/log/sudo` folder.
+    - the TTY mode has to be enabled for security reasons.
+    - for security reasons too, the paths that can be used by sudo must be restricted. Example:
+      `/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/snap/bin`
+
+### Prepare the log directory
+
 ```bash
-sudo touch /etc/sudoers.d/sudoconfig
-sudo mkdir /var/log/sudo
-sudo vi /etc/sudoers.d/sudoconfig
+sudo mkdir -p /var/log/sudo
+sudo chmod 0700 /var/log/sudo
+sudo chown root:root /var/log/sudo
 ```
 
-`# /etc/sudoers.d/sudoconfig`
+The `sudo` configuration is stored in the file `/etc/sudoers.d/sudoconfig`. This file should not be edited directly, edit *only* though command `visudo`:
 
+```bash
+sudo visudo
 ```
-Defaults    passwd_tries=3
-Defaults    badpass_message="Incorrect sudo password, you have a total of 3 tries."
-Defaults    log_input,log_output
-Defaults    iolog_dir="/var/log/sudo"
-Defaults    requiretty
-Defaults    secure_path="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/snap/bin"
+
+Insert the block below **after** the existing `Defaults` lines:
+
+```bash
+###############################################################################
+##  Hardening rules – required by Born2beRoot
+###############################################################################
+
+# 3 attempts max
+Defaults        passwd_tries=3
+
+# Custom error on bad password
+Defaults        badpass_message="Access denied: incorrect password."
+
+# Full I/O logging (command, stdin, stdout, stderr)
+Defaults        log_input, log_output
+# sub-dir per user
+Defaults        iolog_dir=/var/log/sudo/%{user}         
+# file per run (timestamp)
+Defaults        iolog_file=%{command}_%T                
+
+# Force an attached TTY
+Defaults        requiretty
+
+# Tight PATH in sudo context
+Defaults        secure_path="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/snap/bin"
+```
+
+Save & exit; `visudo` will refuse to close if you mistyped anything.
+
+### Verify hardened sudo rules
+
+```bash
+# as the normal user
+sudo -l                   # display Defaults / allowed commands
+
+sudo -k                   # forget cached creds
+
+# intentionally fail 3× 
+sudo ls -al /root   # intentionally enter wrong password 3x
+
+# succeed once and run something
+sudo ls -al /root
+
+# confirm logs exist
+sudo ls -l /var/log/sudo/anemet
+# replays the I/O capture of a command, e.g.
+sudo sudoreplay /var/log/sudo/anemet/ls_01:57:24  
+```
+
+### +1 Task - Set the Clock
+
+We just realized that the clock is not set correctly, let's fix this.
+
+```bash
+# check current date/time
+date
+
+# enable NTP
+sudo timedatectl set-ntp true
+
+# check status 
+timedatectl status
+## NTP service active, but clock not synchronized
+
+# restart NTP
+sudo systemctl restart ntp
+
+
 ```
 
 ## 5 - Setting up a strong password policy
