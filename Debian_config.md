@@ -146,7 +146,7 @@ ssh root@127.0.0.1 -p 4242
 >         - Protocol: TCP
 >         - Host IP: Leave blank (or use 127.0.0.1)
 >         - Host Port: 4242 (You can pick any unused port above 1024)
->         - Guest IP: 10.0.2.15 (Your guest's IP, check with command "ip addr", the ip address is in the row starting with: inet x.x.x.x)
+>         - Guest IP: 10.0.2.15  (Your guest's IP, check with command: hostname -I )
 >         - Guest Port: 4242 (The SSH port set up previously)
 >     - Click OK on all windows to save.
 >
@@ -216,13 +216,15 @@ To                         Action      From
     - for security reasons too, the paths that can be used by sudo must be restricted. Example:
       `/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/snap/bin`
 
-### Prepare the log directory
+### 4.1 Prepare the log directory
 
 ```bash
 sudo mkdir -p /var/log/sudo
 sudo chmod 0700 /var/log/sudo
 sudo chown root:root /var/log/sudo
 ```
+
+### 4.2 `visudo`
 
 The `sudo` configuration is stored in the file `/etc/sudoers.d/sudoconfig`. This file should not be edited directly, edit **only** though command `visudo`:
 
@@ -259,7 +261,7 @@ Defaults        secure_path="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/
 
 Save & exit; `visudo` will refuse to close if you mistyped anything.
 
-### Verify hardened sudo rules
+### 4.3 Verify hardened sudo rules
 
 ```bash
 # as the normal user
@@ -375,7 +377,7 @@ passwd          # for login user anemet
 sudo passwd     # for root
 ```
 
-### 5.4 Password setup check
+### 5.4 Password Policy setup check
 
 ```bash
 # create a throw-away user for tests
@@ -429,9 +431,29 @@ Test1Test111
 sudo userdel -r demo
 ```
 
+## 6. The `monitoring.sh` script
+
+- create a simple script called `monitoring.sh` developed in `bash`.
+- at server startup, the script will display the informations listed below on all terminals and every 10 minutes. The banner is optional. No error must be visible. The script displays:
+    - the architecture of the OS and its kernel version
+    - the number of physical processors
+    - the number of virtual processors
+    - the current available RAM and its utilization rate as a percentage.
+    - the current available storage and its utilization rate as a parcentage.
+    - the current utilization rate of the processors as a percentage
+    - the date and time of the last reboot
+    - whether LVM is active or not
+    - the number of active connections
+    - the number of users using the server
+    - the IPv4 address of the server and its MAC address.
+    - the number of commands executed with the `sudo` program
 
 
-## `cron`
+### 6.1  The architecture of the OS and its kernel version
+
+
+
+### 6.x Crontab
 
 Create script file
 

@@ -1,50 +1,59 @@
 #!/bin/bash
+# Broadcast system health to every logged-in TTY
 
-architecture=$(uname -a)
+#── grab data ————————————————————————————————————————————————
+arch=$(uname -a)
 
-physical_cpu=$(grep "physical id" /proc/cpuinfo | sort | uniq | wc -l)
+nr_sockets=$(lscpu | grep -i "Socket(s):" | awk '{print $NF}')
 
-virtual_cpu=$(grep -c ^processor /proc/cpuinfo)
+physical_cores=$(lscpu -b -p=Core,Socket | grep -v '^#' | sort -u | wc -l)
 
-memory_usage=$(free -m | awk 'NR==2{printf "%s/%sMB (%.2f%%)\n", $3,$2,$3*100/$2 }')
+virt_cpu=$(grep -c ^processor /proc/cpuinfo)
 
-total_disk=$(df -Bg | grep '^/dev/' | grep -v '/boot$' | awk '{ft += $2} END {print ft}')
+read total_mem used_mem <<<$(free -m | awk '/Mem:/ {print $2, $3}')
+mem_pct=$(awk "BEGIN {printf \"%.1f\", $used_mem/$total_mem*100}")
 
-used_disk=$(df -Bm | grep '^/dev/' | grep -v '/boot$' | awk '{ut += $3} END {print ut}')
+read total_disk used_disk <<<$(df -BM --total | awk '/total/ {print substr($2,1,length($2)-1), substr($3,1,length($3)-1)}')
+disk_pct=$(awk "BEGIN {printf \"%.1f\", $used_disk/$total_disk*100}")
 
-percent_used_disk=$(df -Bm | grep '^/dev/' | grep -v '/boot$' | awk '{ut += $3} {ft+= $2} END {printf("%d"), ut/ft*100}')
+cpu_pct=$(mpstat | grep "all" | awk '{print 100 - $NF}')
 
-cpu_load=$(top -bn1 | grep load | awk '{printf "%.2f%%\n", $(NF-2)}')
+last_boot=$(who -b | awk '{print $3, $4}')
 
-last_boot=$(who -b | awk '$1 == "system" {print $3 " " $4}')
+lvm_active=$(lsblk | grep -q " lvm " && echo "yes" || echo "no")
 
-lvm_partitions=$(lsblk | grep -c "lvm")
+# tcp_conn=$(ss -ta state established 2>/dev/null | grep -c ESTAB)
+tcp_conn=$(ss -ta | grep ESTAB | wc -l)
 
-lvm_is_used=$(if [ $lvm_partitions -eq 0 ]; then echo no; else echo yes; fi)
+logged_users=$(who | wc -l)
 
-# [$ sudo apt-get install net-tools]
-tcp_connections=$(cat /proc/net/sockstat{,6} | awk '$1 == "TCP:" {print $3}')
+ip_addr=$(hostname -I | awk '{print $1}')
+mac_addr=$(ip link show | awk '/link\/ether/ {print $2; exit}')
 
-users_logged_in=$(w -h | wc -l)
+sudo_runs=$(sudo find /var/log/sudo -type f 2>/dev/null | wc -l)
 
-ipv4_address=$(hostname -I)
+datetime=$(date)
 
-mac_address=$(ip link show | awk '$1 == "link/ether" {print $2}')
+#── build message ——————————————————————————————————————————————
+msg=$(cat <<EOF
+$arch
 
-# sudo
-sudo_commands_count=$(journalctl _COMM=sudo | grep -c COMMAND) 
+# Nr CPU sockets : $nr_sockets
+# Phys CPU cores : $physical_cores
+# Virt CPU cores : $virt_cpu
+# RAM Usage      : ${used_mem}/${total_mem} MB (${mem_pct}%)
+# Disk Usage     : ${used_disk}/${total_disk} GB (${disk_pct}%)
+# CPU Load       : ${cpu_pct}%
+# Last Boot      : $last_boot
+# LVM Active     : $lvm_active
+# TCP Conns      : $tcp_conn ESTABLISHED
+# Users Logged   : $logged_users
+# IP / MAC       : $ip_addr  ($mac_addr)
+# sudo Commands  : $sudo_runs
+# TimeStamp      : $datetime
+EOF
+)
 
+#── broadcast without the “wall” banner ————————————————
+/usr/bin/wall -n "$msg"
 
-wall "  
-	#Architecture: $architecture
-	#CPU physical: $physical_cpu
-	#vCPU: $virtual_cpu
-	#Memory Usage: $memory_usage
-	#Disk Usage: $used_disk/${total_disk}Gb ($percent_used_disk%)
-	#CPU load: $cpu_load
-	#Last boot: $last_boot
-	#LVM use: $lvm_is_used
-	#Connexions TCP: $tcp_connections ESTABLISHED
-	#User log: $users_logged_in
-	#Network: IP $ipv4_address($mac_address)
-	#Sudo: $sudo_commands_count cmd"
