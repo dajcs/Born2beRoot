@@ -165,6 +165,7 @@ ssh anemet@127.0.0.1 -p 4242
 # get the IP of the Default Gateway inside the WSL terminal 
 ip route | grep default | awk '{print $3}'
 # 172.28.160.1
+
 # use this <def_GW_IP> instead of localhost to ssh to Debian 
 ssh anemet@172.28.160.1 -p 4242
 ```
