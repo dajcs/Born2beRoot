@@ -23,7 +23,6 @@ last_boot=$(who -b | awk '{print $3, $4}')
 
 lvm_active=$(lsblk | grep -q " lvm " && echo "yes" || echo "no")
 
-# tcp_conn=$(ss -ta state established 2>/dev/null | grep -c ESTAB)
 tcp_conn=$(ss -ta | grep ESTAB | wc -l)
 
 logged_users=$(who | wc -l)
@@ -31,7 +30,7 @@ logged_users=$(who | wc -l)
 ip_addr=$(hostname -I | awk '{print $1}')
 mac_addr=$(ip link show | awk '/link\/ether/ {print $2; exit}')
 
-sudo_runs=$(sudo find /var/log/sudo -type f 2>/dev/null | wc -l)
+sudo_runs=$(find /var/log/sudo -mindepth 2 -type d -not -name '*-monitoring.sh' 2>/dev/null | wc -l)
 
 datetime=$(date)
 

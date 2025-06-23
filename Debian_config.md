@@ -250,7 +250,7 @@ Defaults        log_input, log_output
 # sub-dir per user
 Defaults        iolog_dir=/var/log/sudo/%{user}
 # file per run (timestamp)
-Defaults        iolog_file=%{command}_%T
+Defaults        iolog_file=%Y%m%d-%H%M%S-%{command}
 
 # Force an attached TTY
 Defaults        requiretty
@@ -599,7 +599,7 @@ who
 logged_users=$(who | wc -l)
 ```
 
-### 6.1.10 IP address
+#### 6.1.10 IP address
 
 ```bash
 hostname -I
@@ -609,7 +609,7 @@ hostname -I
 ip_addr=$(hostname -I | awk '{print $1}')
 ```
 
-### 6.1.11 MAC address
+#### 6.1.11 MAC address
 
 ```bash
 ip link show
@@ -622,9 +622,79 @@ ip link show
 mac_addr=$(ip link show | awk '/link\/ether/ {print $2; exit}')
 ```
 
+#### 6.1.12 Number of commands executed with `sudo`
+
+```bash
+ls -l /var/log/sudo/anemet
+# total 104
+# drwx------ 2 root root 4096 Jun 23 19:02 20250623-190221-ls
+# drwx------ 2 root root 4096 Jun 23 19:02 20250623-190238-ls
+# drwx------ 2 root root 4096 Jun 23 19:02 20250623-190243-ls
+# drwx------ 2 root root 4096 Jun 23 19:03 20250623-190308-ls
+# drwx------ 2 root root 4096 Jun 23 19:05 20250623-190511-cat
+# drwx------ 2 root root 4096 Jun 23 19:36 20250623-193630-find
+# drwx------ 2 root root 4096 Jun 23 19:37 20250623-193714-find
+# drwx------ 2 root root 4096 Jun 23 19:37 20250623-193719-find
+# drwx------ 2 root root 4096 Jun 23 19:38 20250623-193808-find
+# drwx------ 2 root root 4096 Jun 23 19:42 20250623-194237-monitoring.sh
+# drwx------ 2 root root 4096 Jun 23 19:46 20250623-194651-monitoring.sh
+# drwx------ 2 root root 4096 Jun 23 19:47 20250623-194700-monitoring.sh
+# drwx------ 2 root root 4096 Jun 23 19:47 20250623-194709-monitoring.sh
+# drwx------ 2 root root 4096 Jun 23 19:50 20250623-195042-monitoring.sh
+# drwx------ 2 root root 4096 Jun 23 19:54 20250623-195459-monitoring.sh
+# drwx------ 2 root root 4096 Jun 23 19:56 20250623-195637-monitoring.sh
+# drwx------ 2 root root 4096 Jun 23 19:56 20250623-195641-monitoring.sh
+# drwx------ 2 root root 4096 Jun 23 19:56 20250623-195643-monitoring.sh
+# drwx------ 2 root root 4096 Jun 23 19:56 20250623-195650-monitoring.sh
+# drwx------ 2 root root 4096 Jun 23 19:57 20250623-195712-who
+# drwx------ 2 root root 4096 Jun 23 19:59 20250623-195948-cat
+# drwx------ 2 root root 4096 Jun 23 20:06 20250623-200645-ls
+# drwx------ 2 root root 4096 Jun 23 20:11 20250623-201157-find
+# drwx------ 2 root root 4096 Jun 23 20:12 20250623-201208-find
+# drwx------ 2 root root 4096 Jun 23 20:12 20250623-201214-find
+# drwx------ 2 root root 4096 Jun 23 20:12 20250623-201227-find
+
+# script command
+sudo_runs=$(find /var/log/sudo -mindepth 2 -type d -not -name '*-monitoring.sh' 2>/dev/null | wc -l)
+```
+
+#### 6.1.13 Printing out the collected results
+
+```bash
+datetime=$(date)
+
+#── build message ——————————————————————————————————————————————
+msg=$(cat <<EOF
+$arch
+
+# Nr CPU sockets : $nr_sockets
+# Phys CPU cores : $physical_cores
+# Virt CPU cores : $virt_cpu
+# RAM Usage      : ${used_mem}/${total_mem} MB (${mem_pct}%)
+# Disk Usage     : ${used_disk}/${total_disk} GB (${disk_pct}%)
+# CPU Load       : ${cpu_pct}%
+# Last Boot      : $last_boot
+# LVM Active     : $lvm_active
+# TCP Conns      : $tcp_conn ESTABLISHED
+# Users Logged   : $logged_users
+# IP / MAC       : $ip_addr  ($mac_addr)
+# sudo Commands  : $sudo_runs
+# TimeStamp      : $datetime
+EOF
+)
+
+#── broadcast without the “wall” banner ————————————————
+/usr/bin/wall -n "$msg"
+
+```
+
+#### 6.1.14 Assembling the script `monitoring.sh`
+
+Here is the assembled result of the script: [monitoring.sh](./monitoring.sh)
+
 ### 6.x Crontab
 
-Create script file
+Copy the content of [monitoring.sh](./monitoring.sh) into a file in the home directory.
 
 ```bash
 sudo vi /home/monitoring.sh
@@ -636,9 +706,10 @@ Make executable
 sudo chmod +x /home/monitoring.sh
 ```
 
-Edit cron jobs
+Edit crontab
 
 ```bash
+# -u root -> root's crontab, -e -> edit
 sudo crontab -u root -e
 ```
 
@@ -656,6 +727,7 @@ Check scheduled jobs
 sudo crontab -u root -l
 ```
 
+<!---
 ### Disable `dhcpclient` open port 68
 
 > dont, needed to run package manager
@@ -669,3 +741,4 @@ Comment out `iface enp0s3 inet dhcp`
 ```bash
 sudo reboot
 ```
+--->
