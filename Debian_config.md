@@ -146,8 +146,8 @@ ssh root@127.0.0.1 -p 4242
 >         - Protocol: TCP
 >         - Host IP: Leave blank (or use 127.0.0.1)
 >         - Host Port: 4242 (You can pick any unused port above 1024)
->         - Guest IP: 10.0.2.15 (Your guest's IP, check with command "ip addr", addr in row starting with: inet x.x.x.x)
->         - Guest Port: 4242 (The standard SSH port)
+>         - Guest IP: 10.0.2.15 (Your guest's IP, check with command "ip addr", the ip address is in the row starting with: inet x.x.x.x)
+>         - Guest Port: 4242 (The SSH port set up previously)
 >     - Click OK on all windows to save.
 >
 >     Start your Debian VM.
@@ -155,6 +155,8 @@ ssh root@127.0.0.1 -p 4242
 > How to Connect:
 >
 > Now, from your Ubuntu host terminal, you will SSH to your own host machine (localhost or 127.0.0.1) on the port you specified (4242). VirtualBox will catch this and forward it to the guest.
+>
+> If Windows host, then perform SSH from a WSL (Windows Subsystem for Linux) terminal.
 >
 ```bash
 # On your Ubuntu Host
@@ -222,7 +224,7 @@ sudo chmod 0700 /var/log/sudo
 sudo chown root:root /var/log/sudo
 ```
 
-The `sudo` configuration is stored in the file `/etc/sudoers.d/sudoconfig`. This file should not be edited directly, edit *only* though command `visudo`:
+The `sudo` configuration is stored in the file `/etc/sudoers.d/sudoconfig`. This file should not be edited directly, edit **only** though command `visudo`:
 
 ```bash
 sudo visudo
@@ -269,12 +271,13 @@ sudo -k                   # forget cached creds
 sudo ls -al /root   # intentionally enter wrong password 3x
 
 # succeed once and run something
-sudo ls -al /root
+sudo apt update
 
 # confirm logs exist
-sudo ls -l /var/log/sudo/anemet
-# replays the I/O capture of a command, e.g.
-sudo sudoreplay /var/log/sudo/anemet/ls_01:57:24
+sudo ls -lrt /var/log/sudo/anemet
+
+# replays the I/O capture of a command, e.g. replay previous `apt update`
+sudo sudoreplay /var/log/sudo/anemet/apt_11:52:58
 ```
 
 
@@ -282,34 +285,151 @@ sudo sudoreplay /var/log/sudo/anemet/ls_01:57:24
 
 ## 5 - Setting up a strong password policy
 
-```bash
-sudo vi /etc/login.defs
-```
 
-```
-PASS_MAX_DAYS    99999 -> PASS_MAX_DAYS    30
-PASS_MIN_DAYS    0     -> PASS_MIN_DAYS    2
-```
+- a strong password policy should be implemented:
+    - the password has to expire every 30 days
+    - the minimum number of days allowed before the modification of a password will be set to 2
+    - warning message 7 days before the password expires
+    - password at least 10 characters long. Must contain an uppercase letter, a lower case letter and a number. It must not contain more than 3 consecutive identical characters.
+    - the password must not include the name of the user
+    - the password must have at least 7 characters not part of the former password
+    - the root password has to comply with this policy, except the last "7 character" rule
 
-`PASS_WARN_AGE` is 7 by defaults.
 
-```bash
-sudo apt-get install libpam-pwquality
-sudo vi /etc/pam.d/common-password
-```
-
-Add to the end of the `password requisite pam_pwqiality.so retry=3` line:
-
-```
-minlen=10 ucredit=-1 dcredit=-1 maxrepeat=3 reject_username difok=7 enforce_for_root
-```
-
-Change previous passwords.
+### 5.1 Password-age policy (30 / 2 / 7)
 
 ```bash
-passwd
-sudo passwd
+sudo vim /etc/login.defs
 ```
+
+```bash
+PASS_MAX_DAYS   30   # expire after 30 days
+PASS_MIN_DAYS    2   # must wait 2 days before changing again
+PASS_WARN_AGE    7   # 7-day heads-up e-mail + login banner
+```
+
+These values will be used for every new account at creation.
+
+For any account that already exists (including root) run:
+
+```bash
+sudo chage -M 30 -m 2 -W 7 anemet     # update psw aging for user anemet
+sudo chage -M 30 -m 2 -W 7 root       # update psw aging for root
+```
+
+### 5.2 Quality rules (length, character classes, repeats, username test, 7-char diff)
+
+Install the helper `libpam-pwquality`:
+
+```bash
+sudo apt install -y libpam-pwquality
+```
+
+Then open `/etc/security/pwquality.conf`:
+
+```bash
+sudo vim /etc/security/pwquality.conf
+```
+
+and perform requested password quality settings:
+
+```bash
+
+difok           = 7         # ≥7 chars different from previous
+minlen          = 10        # ≥10 chars
+dcredit         = -1        # at least 1 digit
+ucredit         = -1        # at least 1 uppercase
+lcredit         = -1        # at least 1 lowercase
+maxrepeat       = 3         # no “aaaa”, “1111”…
+usercheck       = 1         # forbid name inside password
+enforce_for_root            # root must obey (see note below)
+
+```
+
+**root exception**
+pam_pwquality can’t compare old vs. new when root changes its own password—the old hash is never asked for -- so `difok=7` simply doesn’t apply to root, yet all the other checks still do.
+
+
+### 5.3 Wire the module into PAM (if the installer didn’t already)
+
+
+
+Open `/etc/pam.d/common-password`:
+
+```bash
+sudo vim /etc/pam.d/common-password
+```
+
+...and make sure it has the line below (or add it if missing):
+```bash
+password  requisite  pam_pwquality.so retry=3
+```
+
+That's it -- from now `pwquality.conf` drives the rules.
+
+
+Change previous passwords to comply with the new rules:
+
+```bash
+passwd          # for login user anemet
+sudo passwd     # for root
+```
+
+### 5.4 Password setup check
+
+```bash
+# create a throw-away user for tests
+sudo adduser demo
+# try several week passwords: demo, demo1, Demo1:
+# ----------------------------------------------
+# Adding user `demo' ...
+# Adding new group `demo' (1002) ...
+# Adding new user `demo' (1002) with group `demo (1002)' ...
+# Creating home directory `/home/demo' ...
+# Copying files from `/etc/skel' ...
+# New password:
+demo
+# BAD PASSWORD: The password contains less than 1 digits
+# New password:
+demo1
+# BAD PASSWORD: The password contains less than 1 uppercase letters
+# New password:
+Demo1
+# BAD PASSWORD: The password is shorter than 10 characters
+# passwd: Have exhausted maximum number of retries for service
+# passwd: password unchanged
+# Try again? [y/N]
+y
+# some more passwords: Demo1Demo1111, Demo1Demo111, Test1Test111
+# New password:
+Demo1Demo1111
+# BAD PASSWORD: The password contains more than 3 same characters consecutively
+# New password:
+Demo1Demo111
+# BAD PASSWORD: The password contains the user name in some form
+# New password:
+Test1Test111
+# Retype new password:
+# passwd: password updated successfully
+# Changing the user information for demo
+# Enter the new value, or press ENTER for the default
+# 	Full Name []: Demo
+# 	Room Number []:
+# 	Work Phone []:
+# 	Home Phone []:
+# 	Other []:
+# Is the information correct? [Y/n]
+# Adding new user `demo' to supplemental / extra groups `users' ...
+# Adding user `demo' to group `users' ...
+
+```
+
+```bash
+# delete demo user and remove it's home directory
+sudo userdel -r demo
+```
+
+
 
 ## `cron`
 
