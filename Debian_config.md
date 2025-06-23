@@ -127,6 +127,42 @@ Test that `root` ssh is not permitted:
 ssh root@127.0.0.1 -p 4242
 ```
 
+---
+> ### Note: SSH from Ubuntu host to the Debian VM
+>
+> **Why**: This is one more extra test, but more importantly after this setup and ssh to Debian VM you can use the copy/paste in the terminal.
+>
+> **Concept**: You will tell VirtualBox: "Any connection that comes to my host machine on a specific port (e.g., 4242) should be forwarded to the guest machine's IP on port (4242)."
+>
+> **Steps**:
+>
+>     - Shut down your Debian VM.
+>     - In VirtualBox, select your Debian VM and go to Settings > Network.
+>     - Ensure "Attached to:" is still set to NAT (Network Address Translation, the default setting)
+>     - Expand the "Advanced" section and click the "Port Forwarding" button.
+>     - Click the green "+" icon to add a new rule.
+>     - Fill in the fields like this:
+>         - Name: SSH (or any name you like)
+>         - Protocol: TCP
+>         - Host IP: Leave blank (or use 127.0.0.1)
+>         - Host Port: 4242 (You can pick any unused port above 1024)
+>         - Guest IP: 10.0.2.15 (Your guest's IP, check with command "ip addr", addr in row starting with: inet x.x.x.x)
+>         - Guest Port: 4242 (The standard SSH port)
+>     - Click OK on all windows to save.
+>
+>     Start your Debian VM.
+>
+> How to Connect:
+>
+> Now, from your Ubuntu host terminal, you will SSH to your own host machine (localhost or 127.0.0.1) on the port you specified (4242). VirtualBox will catch this and forward it to the guest.
+>
+```bash
+# On your Ubuntu Host
+# You are connecting to your own machine (localhost) on the forwarded port
+ssh anemet@127.0.0.1 -p 4242
+```
+---
+
 ## 3 - Installing UFW
 
 UFW - Uncomplicated FireWall
@@ -154,11 +190,16 @@ sudo ufw status verbose
 you should see:
 
 ```vbnet
+anemet@anemet42:~$ sudo ufw status verbose
 Status: active
+Logging: on (low)
+Default: deny (incoming), allow (outgoing), disabled (routed)
+New profiles: skip
+
 To                         Action      From
 --                         ------      ----
-4242/tcp                   ALLOW       Anywhere           # SSH service
-4242/tcp (v6)              ALLOW       Anywhere (v6)      # SSH service
+4242/tcp                   ALLOW IN    Anywhere                   # SSH service
+4242/tcp (v6)              ALLOW IN    Anywhere (v6)              # SSH service
 ```
 
 
@@ -203,9 +244,9 @@ Defaults        badpass_message="Access denied: incorrect password."
 # Full I/O logging (command, stdin, stdout, stderr)
 Defaults        log_input, log_output
 # sub-dir per user
-Defaults        iolog_dir=/var/log/sudo/%{user}         
+Defaults        iolog_dir=/var/log/sudo/%{user}
 # file per run (timestamp)
-Defaults        iolog_file=%{command}_%T                
+Defaults        iolog_file=%{command}_%T
 
 # Force an attached TTY
 Defaults        requiretty
@@ -224,7 +265,7 @@ sudo -l                   # display Defaults / allowed commands
 
 sudo -k                   # forget cached creds
 
-# intentionally fail 3× 
+# intentionally fail 3×
 sudo ls -al /root   # intentionally enter wrong password 3x
 
 # succeed once and run something
@@ -233,7 +274,7 @@ sudo ls -al /root
 # confirm logs exist
 sudo ls -l /var/log/sudo/anemet
 # replays the I/O capture of a command, e.g.
-sudo sudoreplay /var/log/sudo/anemet/ls_01:57:24  
+sudo sudoreplay /var/log/sudo/anemet/ls_01:57:24
 ```
 
 
