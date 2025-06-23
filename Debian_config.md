@@ -144,7 +144,7 @@ ssh root@127.0.0.1 -p 4242
 >     - Fill in the fields like this:
 >         - Name: SSH (or any name you like)
 >         - Protocol: TCP
->         - Host IP: Leave blank (or use 127.0.0.1)
+>         - Host IP: Leave blank 
 >         - Host Port: 4242 (You can pick any unused port above 1024)
 >         - Guest IP: 10.0.2.15  (Your guest's IP, check with command: hostname -I )
 >         - Guest Port: 4242 (The SSH port set up previously)
@@ -155,14 +155,20 @@ ssh root@127.0.0.1 -p 4242
 > How to Connect:
 >
 > Now, from your Ubuntu host terminal, you will SSH to your own host machine (localhost or 127.0.0.1) on the port you specified (4242). VirtualBox will catch this and forward it to the guest.
->
-> If Windows host, then perform SSH from a WSL (Windows Subsystem for Linux) terminal.
->
 ```bash
 # On your Ubuntu Host
 # You are connecting to your own machine (localhost) on the forwarded port
 ssh anemet@127.0.0.1 -p 4242
 ```
+> If you have a Windows host, you can use the WSL (Windows Subsystem for Linux) terminal for login, but there is an extra step to find out the WSL terminal default gateway IP address. This will be used instead of localhost in the previous case.
+```bash
+# get the IP of the Default Gateway inside the WSL terminal 
+ip route | grep default | awk '{print $3}'
+# 172.28.160.1
+# use this <def_GW_IP> instead of localhost to ssh to Debian 
+ssh anemet@172.28.160.1 -p 4242
+```
+
 ---
 
 ## 3 - Installing UFW
