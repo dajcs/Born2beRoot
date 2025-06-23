@@ -16,6 +16,7 @@ mem_pct=$(awk "BEGIN {printf \"%.1f\", $used_mem/$total_mem*100}")
 read total_disk used_disk <<<$(df -BM --total | awk '/total/ {print substr($2,1,length($2)-1), substr($3,1,length($3)-1)}')
 disk_pct=$(awk "BEGIN {printf \"%.1f\", $used_disk/$total_disk*100}")
 
+# sudo apt install sysstat
 cpu_pct=$(mpstat | grep "all" | awk '{print 100 - $NF}')
 
 last_boot=$(who -b | awk '{print $3, $4}')

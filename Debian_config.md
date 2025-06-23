@@ -449,9 +449,178 @@ sudo userdel -r demo
     - the number of commands executed with the `sudo` program
 
 
-### 6.1  The architecture of the OS and its kernel version
+### 6.1 Commands used to collect the requested info
 
+#### 6.1.1 The architecture of the OS and its kernel version
 
+```bash
+uname -a
+# Linux anemet42 6.1.0-37-amd64 #1 SMP PREEMPT_DYNAMIC Debian 6.1.140-1 (2025-05-22) x86_64 GNU/Linux
+```
+
+#### 6.1.2 The number of CPU sockets, CPU cores, virtual CPUs
+
+```bash
+# getting nr_socket:
+lscpu | grep -i "Socket(s):"
+# Socket(s):                               1
+
+# script command
+nr_sockets=$(lscpu | grep -i "Socket(s):" | awk '{print $NF}')
+```
+
+```bash
+# getting nr physical core:
+lscpu -b -p=Core,Socket | grep -v "^#"
+# 0,0
+# 1,0
+
+# script command
+physical_cores=$(lscpu -b -p=Core,Socket | grep -v '^#' | sort -u | wc -l)
+```
+
+```bash
+# getting nr virtual CPU:
+grep  ^processor /proc/cpuinfo
+# processor	: 0
+# processor	: 1
+
+# script command
+virt_cpu=$(grep -c ^processor /proc/cpuinfo)
+```
+
+#### 6.1.3 Memory availability and utilization
+
+```bash
+free -m
+#                total        used        free      shared  buff/cache   available
+# Mem:            1967         255        1506           0         348        1711
+# Swap:           2191           0        2191
+
+# script command
+read total_mem used_mem <<<$(free -m | awk '/Mem:/ {print $2, $3}')
+mem_pct=$(awk "BEGIN {printf \"%.1f\", $used_mem/$total_mem*100}")
+```
+
+#### 6.1.4 Available storage and utilization
+
+```bash
+df -BM --total
+# Filesystem                    1M-blocks  Used Available Use% Mounted on
+# udev                               957M    0M      957M   0% /dev
+# tmpfs                              197M    1M      197M   1% /run
+# /dev/mapper/LVMGroup-root         9287M 1384M     7410M  16% /
+# tmpfs                              984M    0M      984M   0% /dev/shm
+# tmpfs                                5M    0M        5M   0% /run/lock
+# /dev/mapper/LVMGroup-home         4611M    1M     4357M   1% /home
+# /dev/sda1                          436M  118M      291M  29% /boot
+# /dev/mapper/LVMGroup-srv          2743M    1M     2584M   1% /srv
+# /dev/mapper/LVMGroup-tmp          2743M    1M     2584M   1% /tmp
+# /dev/mapper/LVMGroup-var          2743M  237M     2348M  10% /var
+# /dev/mapper/LVMGroup-var--log     5987M   51M     5612M   1% /var/log
+# tmpfs                              197M    0M      197M   0% /run/user/1000
+# total                            30887M 1790M    27521M   7% -
+
+# script command
+read total_disk used_disk <<<$(df -BM --total | awk '/total/ {print substr($2,1,length($2)-1), substr($3,1,length($3)-1)}')
+disk_pct=$(awk "BEGIN {printf \"%.1f\", $used_disk/$total_disk*100}")
+```
+
+#### 6.1.5 CPU utilization rate
+
+```bash
+# install `sysstat`
+sudo apt install sysstat
+
+mpstat
+# Linux 6.1.0-37-amd64 (anemet42) 	06/23/2025 	_x86_64_	(2 CPU)
+#
+# 05:14:10 PM  CPU    %usr   %nice    %sys %iowait    %irq   %soft  %steal  %guest  %gnice   %idle
+# 05:14:10 PM  all    0.01    0.00    0.06    1.83    0.00    0.09    0.00    0.00    0.00   98.00
+
+# script command
+last_boot=$(who -b | awk '{print $3, $4}')
+```
+
+#### 6.1.6 Last boot
+
+```bash
+who -b
+#         system boot  2025-06-23 08:14
+
+# script command
+         system boot  2025-06-23 08:14
+```
+
+#### 6.1.7 LVM active
+
+```bash
+lsblk
+# NAME                    MAJ:MIN RM  SIZE RO TYPE  MOUNTPOINTS
+# sda                       8:0    0   31G  0 disk
+# ├─sda1                    8:1    0  476M  0 part  /boot
+# ├─sda2                    8:2    0    1K  0 part
+# └─sda5                    8:5    0 30.5G  0 part
+#   └─sda5_crypt          254:0    0 30.5G  0 crypt
+#     ├─LVMGroup-root     254:1    0  9.3G  0 lvm   /
+#     ├─LVMGroup-swap     254:2    0  2.1G  0 lvm   [SWAP]
+#     ├─LVMGroup-home     254:3    0  4.7G  0 lvm   /home
+#     ├─LVMGroup-var      254:4    0  2.8G  0 lvm   /var
+#     ├─LVMGroup-srv      254:5    0  2.8G  0 lvm   /srv
+#     ├─LVMGroup-tmp      254:6    0  2.8G  0 lvm   /tmp
+#     └─LVMGroup-var--log 254:7    0    6G  0 lvm   /var/log
+# sr0                      11:0    1 1024M  0 rom
+
+# script command
+lvm_active=$(lsblk | grep -q " lvm " && echo "yes" || echo "no")
+```
+
+#### 6.1.8 Number of active connections
+
+```bash
+ss -ta
+# State         Recv-Q        Send-Q                Local Address:Port                 Peer Address:Port         Process
+# LISTEN        0             128                         0.0.0.0:4242                      0.0.0.0:*
+# ESTAB         0             0                         10.0.2.15:4242                     10.0.2.2:46420
+# LISTEN        0             128                            [::]:4242                         [::]:*
+
+# script command
+tcp_conn=$(ss -ta | grep ESTAB | wc -l)
+```
+
+#### 6.1.9 Number of users logged in the server
+
+```bash
+who
+# anemet   tty1         2025-06-23 08:14
+# anemet   pts/0        2025-06-23 08:16 (10.0.2.2)
+
+# script command
+logged_users=$(who | wc -l)
+```
+
+### 6.1.10 IP address
+
+```bash
+hostname -I
+# 10.0.2.15
+
+# script command
+ip_addr=$(hostname -I | awk '{print $1}')
+```
+
+### 6.1.11 MAC address
+
+```bash
+ip link show
+# 1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN mode DEFAULT group default qlen 1000
+#     link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+# 2: enp0s3: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP mode DEFAULT group default qlen 1000
+#     link/ether 08:00:27:c5:54:9a brd ff:ff:ff:ff:ff:ff
+
+#script command
+mac_addr=$(ip link show | awk '/link\/ether/ {print $2; exit}')
+```
 
 ### 6.x Crontab
 
