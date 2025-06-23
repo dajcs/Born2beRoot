@@ -93,14 +93,18 @@ sudo systemctl restart ssh
 sudo systemctl enable  ssh      # start on boot
 ```
 
-### Note: What is `systemctl`?
+---
 
-- `systemctl` is the Swiss-army knife for systemd, the init system and service manager that boots Debian (and most modern Linux distros) and keeps everything running
-- Old Debian used a pile of SysV init scripts in `/etc/init.d/`. They were simple but brittle and slow. Systemd replaced that with:
-    - **Units** - declarative files (`*.service`, `*.socket`, `*.mount`, …) that describe how to start, stop, order, and monitor things.
-    - **cgroups** + **journald** - process tracking and unified logging
-    - **Parallel boot** - starts independent units at the same time, shaving seconds off boot
-    - `systemctl` is the CLI frontend to summon these units, in our case it spared us a restart
+> ### Note: What is `systemctl`?
+>
+> - `systemctl` is the Swiss-army knife for systemd, the init system and service manager that boots Debian (and most modern Linux distros) and keeps everything running
+> - Old Debian used a pile of SysV init scripts in `/etc/init.d/`. They were simple but brittle and slow. Systemd replaced that with:
+>     - **Units** - declarative files (`*.service`, `*.socket`, `*.mount`, …) that describe how to start, stop, order, and monitor things.
+>     - **cgroups** + **journald** - process tracking and unified logging
+>    - **Parallel boot** - starts independent units at the same time, shaving seconds off boot
+>    - `systemctl` is the CLI frontend to summon these units, in our case it spared us a restart
+
+---
 
 Verify SSH listening:
 
@@ -130,7 +134,7 @@ UFW - Uncomplicated FireWall
 ```bash
 sudo apt install -y ufw
 
-# default deny everything
+# default deny incoming, allow outgoing
 sudo ufw default deny incoming
 sudo ufw default allow outgoing
 
@@ -232,26 +236,8 @@ sudo ls -l /var/log/sudo/anemet
 sudo sudoreplay /var/log/sudo/anemet/ls_01:57:24  
 ```
 
-### +1 Task - Set the Clock
-
-We just realized that the clock is not set correctly, let's fix this.
-
-```bash
-# check current date/time
-date
-
-# enable NTP
-sudo timedatectl set-ntp true
-
-# check status 
-timedatectl status
-## NTP service active, but clock not synchronized
-
-# restart NTP
-sudo systemctl restart ntp
 
 
-```
 
 ## 5 - Setting up a strong password policy
 
