@@ -128,48 +128,41 @@ ssh root@127.0.0.1 -p 4242
 ```
 
 ---
-> ### Note: SSH from Ubuntu host to the Debian VM
->
-> **Why**: This is one more extra test, but more importantly after this setup and ssh to Debian VM you can use the copy/paste in the terminal.
->
-> **Concept**: You will tell VirtualBox: "Any connection that comes to my host machine on a specific port (e.g., 4242) should be forwarded to the guest machine's IP on port (4242)."
->
-> **Steps**:
->
->     - Shut down your Debian VM.
->     - In VirtualBox, select your Debian VM and go to Settings > Network.
->     - Ensure "Attached to:" is still set to NAT (Network Address Translation, the default setting)
->     - Expand the "Advanced" section and click the "Port Forwarding" button.
->     - Click the green "+" icon to add a new rule.
->     - Fill in the fields like this:
->         - Name: SSH (or any name you like)
->         - Protocol: TCP
->         - Host IP: Leave blank 
->         - Host Port: 4242 (You can pick any unused port above 1024)
->         - Guest IP: 10.0.2.15  (Your guest's IP, check with command: hostname -I )
->         - Guest Port: 4242 (The SSH port set up previously)
->     - Click OK on all windows to save.
->
->     Start your Debian VM.
->
-> How to Connect:
->
-> Now, from your Ubuntu host terminal, you will SSH to your own host machine (localhost or 127.0.0.1) on the port you specified (4242). VirtualBox will catch this and forward it to the guest.
-```bash
-# On your Ubuntu Host
-# You are connecting to your own machine (localhost) on the forwarded port
-ssh anemet@127.0.0.1 -p 4242
-```
-> If you have a Windows host, you can use the WSL (Windows Subsystem for Linux) terminal for login, but there is an extra step to find out the WSL terminal default gateway IP address. This will be used instead of localhost in the previous case.
-```bash
-# get the IP of the Default Gateway inside the WSL terminal 
-ip route | grep default | awk '{print $3}'
-# 172.28.160.1
+## Note: SSH from Ubuntu/Windows host to the Debian VM
+- **Why**: This is one more extra test, but more importantly after this setup and ssh to Debian VM you can use the **copy/paste in the terminal**.
+- **Concept**: You will tell VirtualBox: "Any connection that comes to my host machine on a specific port (e.g., 8080) should be forwarded to the guest machine's IP on port (4242)."
+- **Steps**:
+    - Shut down your Debian VM.
+    - In VirtualBox, select your Debian VM and go to Settings > Network.
+    - Ensure "Attached to:" is still set to NAT (Network Address Translation, the default setting)
+    - Expand the "Advanced" section and click the "Port Forwarding" button.
+    - Click the green "+" icon to add a new rule.
+    - Fill in the fields like this:
+        - Name: SSH (or any name you like)
+        - Protocol: TCP
+        - Host IP: Leave blank
+        - Host Port: 8080 -- in theory you can pick any unused port above 1024, but better to use well known ports because some security software might catch your unusual communication (e.g. at 42 Luxembourg)
+        - Guest IP: 10.0.2.15  (Your Debian VM's IP, check with command: hostname -I )
+        - Guest Port: 4242 (The SSH port set up previously)
+    - Click OK on all windows to save.
+    - Start your Debian VM.
+- **How to Connect from Ubuntu**:  \
+    Now, from your Ubuntu host terminal, you will SSH to your own host machine (localhost or 127.0.0.1) on the port you specified (8080). VirtualBox will catch this and forward it to the guest (on port 4242).
+    ```bash
+    # On your Ubuntu Host
+    # You are connecting to your own machine (localhost) on the forwarded port
+    ssh anemet@127.0.0.1 -p 8080
+    ```
+- **How to Connect from Windows**:  \
+If you have a Windows host, you can use the WSL (Windows Subsystem for Linux) terminal for login, but there is an extra step to find out the WSL terminal default gateway IP address. WSL and the Windows host are on different networks, so we have to use this gateway IP instead of localhost in the previous case.
+    ```bash
+    # get the IP of the Default Gateway inside the WSL terminal
+    ip route | grep default | awk '{print $3}'
+    # 172.28.160.1
 
-# use this <def_GW_IP> instead of localhost to ssh to Debian 
-ssh anemet@172.28.160.1 -p 4242
-```
-
+    # use this <def_GW_IP> instead of localhost to ssh to Debian
+    ssh anemet@172.28.160.1 -p 8080
+    ```
 ---
 
 ## 3 - Installing UFW
