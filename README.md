@@ -6,4 +6,4 @@
 - [Debian configuration](./Debian_config.md)
 - [Monitoring script](./monitoring.sh)
 - [Project evaluation](./Evaluation.md)
-- [Bonus setup](./LLMP.md)
+- [Bonus setup](./Bonus.md)

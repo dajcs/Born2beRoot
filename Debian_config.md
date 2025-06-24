@@ -717,8 +717,9 @@ After line23 `# m h dom mon dow command`
 
 Put line24
 
-```
-*/10 * * * * /home/monitoring.sh
+```bash
+# m   h  dom mon dow  command
+*/10  *   *   *   *   sh /home/monitoring.sh
 ```
 
 Check scheduled jobs
