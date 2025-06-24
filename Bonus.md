@@ -184,7 +184,7 @@ sudo apt purge -y apache2 libapache2-mod-php8.2 apache2-bin apache2-utils apache
 sudo apt autoremove -y          # toss the now-orphaned libs
 ```
 
-2. Install FPM + the WordPress extensions 
+2. Install FPM + the WordPress extensions
 ```bash
 sudo apt install -y php8.2-fpm php-mysql php-gd php-xml php-curl php-mbstring php-zip php-intl
 ```
@@ -221,3 +221,88 @@ gd, intl, etc.
 sudo rm /var/www/html/info.php
 ```
 
+## 4. WordPress
+
+0. To install the latest version of WordPress, make sure we have installed `curl`, `wget` and `zip`.
+```bash
+sudo apt install curl wget zip
+```
+
+1. Grab the current WordPress release and unpack it
+```bash
+cd /tmp
+curl -LO https://wordpress.org/latest.tar.gz      # 6.8.1 as of June 24 2025
+sudo tar -xzf latest.tar.gz -C /var/www/           # creates /var/www/wordpress
+```
+- `curl -LO` writes the tarball (-O) and follows redirects (-L).
+- `/var/www/wordpress` keeps WP separate from any other sites you might host.
+
+2. Hand the files to the web server user
+```bash
+sudo chown -R www-data:www-data /var/www/wordpress
+```
+- `www-data` is the user/group lighttpd and PHP-FPM run as; ownership avoids permission headaches when WP tries to upload plugins, themes, or media.
+
+3. Create the WordPress config
+```bash
+cd /var/www/wordpress
+sudo cp wp-config-sample.php wp-config.php
+sudo vim wp-config.php
+```
+
+- edit 4 lines:
+```php
+define( 'DB_NAME', 'wordpress' );
+define( 'DB_USER', 'wpuser' );
+define( 'DB_PASSWORD', 'changeThisPassword!' );
+define( 'DB_HOST', 'localhost' );   // leave as-is
+```
+
+- cut-paste fresh secret keys at the end of `wp-config.php`:
+```bash
+curl -s https://api.wordpress.org/secret-key/1.1/salt/ | sudo tee -a wp-config.php
+```
+
+4. Point lighttpd at the new doc-root
+- Open the main config:
+```bash
+sudo vim /etc/lighttpd/lighttpd.conf
+```
+- Find the existing server.document-root line and change it:
+```bash
+server.document-root = "/var/www/wordpress"
+# Make sure index-file.names already contains index.php (Debian’s default does)
+# index-file.names            = ( "index.php", "index.html" )
+```
+- save file
+
+- to have pretty permalinks, enable mod_rewrite:
+```bash
+sudo lighty-enable-mod rewrite
+# Enabling rewrite: ok
+# Run "service lighttpd force-reload" to enable changes
+```
+- finally reload `lighttpd`:
+```bash
+sudo systemctl reload lighttpd
+```
+
+5. Kick off the browser installer
+- Host machine browser URL: http://localhost:8088/
+- Redirects to http://localhost:8088/wp-admin/install.php
+    - Site Title – anything you like (Hello World!)
+    - Username / Password – new WP admin creds (anemet / psw)
+    - Your Email (anemet@student.42luxembourg.lu)
+    - press `Install WordPress`
+- **Success!** - WordPress has been installed. Thank you, and enjoy!
+
+6. Post-install housekeeping
+- Delete the tarball to reclaim space
+
+```bash
+rm /tmp/latest.tar.gz
+```
+
+- Inside the WP dashboard:
+    - Settings → Permalinks → choose a pretty format
+    - Update to any newer 6.8.x maintenance release when prompted.
