@@ -11,6 +11,23 @@ sudo apt update
 sudo apt install lighttpd
 ```
 
+Start the service and make sure it comes up after every reboot
+```bash
+sudo systemctl enable --now lighttpd
+```
+- `enable` – add a boot-time symlink so the daemon auto-starts.
+- `--now` – flip the switch immediately so no need to reboot just to test.
+
+
+Confirm it’s running
+```bash
+systemctl status lighttpd --no-pager
+```
+Look for `Active: active (running)`  \
+Logs are in `journalctl -u lighttpd`.
+
+### Open firewall port 80
+
 Allow incoming connections using Port 80
 
 ```bash
@@ -23,7 +40,93 @@ Check `ufw` status
 sudo ufw status verbose
 ```
 
-TODO: add port 80 forwarding to VM
+### Manage port forwarding on Virtualbox VM
+
+Find the VM’s IP so you can hit it from the host
+```bash
+hostname -I
+# 10.0.2.15
+
+# or
+
+ip -brief address
+# lo               UNKNOWN        127.0.0.1/8 ::1/128
+# enp0s3           UP             10.0.2.15/24 fe80::a00:27ff:fec5:549a/64
+```
+The first address on the enp0s3 / eth0 interface is usually the VM's IP.
+
+(VirtualBox) punch a hole if you’re in NAT mode \
+If your VM uses the default NAT adapter, forward port 80:
+
+```bash
+# this command should be entered on the Ubuntu host
+VBoxManage modifyvm "Born2beRoot" --natpf1 "http,tcp,,8088,10.0.2.15,80"
+```
+
+Alternatively the port forwarding can be setup from the GUI - as seen at SSH host to guest setup.
+
+Now browsing to http://localhost:8088/ on your host should show the “lighttpd Debian Placeholder” page.
+
+### Tweaking later on
+
+- Config lives in `/etc/lighttpd/lighttpd.conf` (+ snippets in `conf-available/`).
+- Reload after config edits `sudo systemctl reload lighttpd`
+
+
+## 2. MariaDB
+
+1. Refresh your package index (again – it never hurts)
+```bash
+sudo apt update
+```
+
+2. Pull in MariaDB Server
+```bash
+sudo apt install mariadb-server
+```
+Debian 12 ships the 10.11-LTS branch.
+
+3. Start it and make it boot-persistent
+```bash
+sudo systemctl enable --now mariadb
+```
+
+Exactly like we did with lighttpd:
+- `enable` adds a boot-time symlink.
+- `--now` starts the service immediately
+
+4. Verify it’s alive
+```bash
+systemctl status mariadb --no-pager
+```
+Look for `Active: active (running)`. \
+Logs live in `journalctl -u mariadb`.
+
+5. Run the hardening script
+```bash
+sudo mariadb-secure-installation
+```
+
+You’ll get a handful of interactive prompts – here’s the quick playbook:
+
+| Prompt                          | Recommended answer | Reason                                                                                             |
+| ------------------------------- | ------------------ | -------------------------------------------------------------------------------------------------- |
+| `Switch to unix_socket auth?`   | **Y** (default)    | Lets `root` log in *only* from the shell via sudo, no password to remember, harder to brute-force. |
+| `Change the root password?`     | **N** (skip)       | Not needed if you kept unix\_socket.                                                               |
+| `Remove anonymous users?`       | **Y**              | Less attack surface.                                                                               |
+| `Disallow root login remotely?` | **Y**              | Root should never tunnel in over TCP.                                                              |
+| `Remove test database?`         | **Y**              | It’s world-readable by default.                                                                    |
+| `Reload privilege tables?`      | **Y**              | Activates the changes immediately.                                                                 |
+
+<BR>
+
+6. Smoke-test the connection
+```bash
+sudo mariadb -e "SELECT VERSION();"
+```
+Should print 10.11.x-MariaDB-.... If that works, the daemon is listening on its UNIX socket and accepting local connections.
+
+
 
 
 
@@ -36,12 +139,40 @@ To install the latest version of WordPress we must first install wget and zip.
 - wget: It is a command line tool used to download files from the web.
 - zip: It is a command line utility for compressing and decompressing files in ZIP format.
 
-
-
-
 ```bash
 sudo apt install wget zip
 ```
+Go to directory `/var/www`
+
+```bash
+cd /var/www
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 Download WordPress to `/var/www/html`.
 

@@ -333,7 +333,7 @@ Then open `/etc/security/pwquality.conf`:
 sudo vim /etc/security/pwquality.conf
 ```
 
-and perform requested password quality settings:
+and perform requested password quality settings by uncommenting the lines and setting the corresponding values
 
 ```bash
 
