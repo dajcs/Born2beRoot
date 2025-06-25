@@ -142,7 +142,7 @@ ssh root@127.0.0.1 -p 4242
         - Protocol: TCP
         - Host IP: Leave blank
         - Host Port: 2222 -- in theory you can pick any unused port above 1024, but port 4242 was not working at 42 Luxembourg, so I choose a different one
-        - Guest IP: 10.0.2.15  (Your Debian VM's IP, check with command: hostname -I )
+        - Guest IP: 10.0.2.15  (Your Debian VM's IP, check with command: `hostname -I` )
         - Guest Port: 4242 (The SSH port set up previously)
     - Click OK on all windows to save.
 

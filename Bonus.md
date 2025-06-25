@@ -186,19 +186,21 @@ EXIT;
 
 This finishes the “L-P-M” stack so WordPress can run.
 
+<!---
 1. Stop and remove Apache so it doesn’t fight lighttpd for port 80
 ```bash
 sudo systemctl disable --now apache2
 sudo apt purge -y apache2 libapache2-mod-php8.2 apache2-bin apache2-utils apache2-data
 sudo apt autoremove -y          # toss the now-orphaned libs
 ```
+--->
 
-2. Install FPM + the WordPress extensions
+1. Install FPM + the WordPress extensions
 ```bash
 sudo apt install -y php8.2-fpm php-mysql php-gd php-xml php-curl php-mbstring php-zip php-intl
 ```
 
-3. Enable and start the FPM pool
+2. Enable and start the FPM pool
 ```bash
 sudo systemctl enable --now php8.2-fpm
 systemctl status php8.2-fpm --no-pager    # should show “active (running)”
@@ -216,7 +218,7 @@ sudo lighty-enable-mod fastcgi-php-fpm     # points to PHP-FPM
 sudo systemctl reload lighttpd
 ```
 
-4. End-to-end test. Create a mini-website with the one-liner PHP script `<?php phpinfo(); ?>` which, when hit in a browser, dumps every detail about the PHP runtime. Put this into `/var/www/html/info.php`:
+3. End-to-end test. Create a mini-website with the one-liner PHP script `<?php phpinfo(); ?>` which, when hit in a browser, dumps every detail about the PHP runtime. Put this into `/var/www/html/info.php`:
 
 ```bash
 echo "<?php phpinfo(); ?>" | sudo tee /var/www/html/info.php
@@ -298,7 +300,7 @@ sudo systemctl reload lighttpd
 
 5. Kick off the browser installer
 - Host machine browser URL: http://localhost:8088/
-- Redirects to http://localhost:8088/wp-admin/install.php
+- At first login this redirects to the install page: http://localhost:8088/wp-admin/install.php
     - Site Title – anything you like (Hello World!)
     - Username / Password – new WP admin creds (anemet / psw)
     - Your Email (anemet@student.42luxembourg.lu)
@@ -312,6 +314,145 @@ sudo systemctl reload lighttpd
 rm /tmp/latest.tar.gz
 ```
 
-- Inside the WP dashboard:
+- You can manage your WP site on the WP dashboard: http://localhost:8088/wp-admin/index.php
     - Settings → Permalinks → choose a pretty format
     - Update to any newer 6.8.x maintenance release when prompted.
+
+
+## 5. Extra Service
+
+We have to set up a service our choice that is useful (NGINX / Apache2 excluded!) and we have to justify our choice.
+
+Here are some services to choose from:
+
+| Service                                           | What it does                                                                                                                                                          | One-liner pitch                                                                           |
+| ------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| **Fail2ban**                                      | Monitors log files (lighttpd, SSH, WordPress XML-RPC, etc.) and auto-blocks IPs that show repeated bad behavior via `iptables`.                                              | “It gives the server a self-defense reflex against brute-force attacks without me babysitting log files.”            |
+| **Redis-server** (plus the `php-redis` extension) | Runs as an in-memory key/value store. When you activate a WordPress object-cache plugin it slashes DB round-trips and page-generation time—especially noticeable under load. | “It’s a performance turbo: WordPress shoves transient data into RAM instead of hitting MariaDB for every page view.” |
+| **Certbot (Let’s Encrypt client)**                | Automates getting and renewing a free TLS certificate; hooks exist for lighttpd so HTTPS is set-and-forget.                                                                  | “Zero-cost, auto-renewing HTTPS means no expired-certificate outages and Google stops whining about ‘Not Secure’.”   |
+
+
+## Extra Service - Fail2ban
+
+1. Install & bootstrap
+```bash
+sudo apt update
+sudo apt install fail2ban
+sudo systemctl enable --now fail2ban
+```
+
+2. Make your own `jail.local`.
+- Directly editing the original `jail.conf` is not recommended because updates may overwrite your changes.
+
+```bash
+sudo nano /etc/fail2ban/jail.local
+```
+
+- Minimal tweaks worth doing:
+
+```ini
+[DEFAULT]
+bantime   = 15m
+findtime  = 10m
+maxretry  = 5
+backend   = systemd
+
+[sshd]
+enabled   = true
+
+[wordpress]
+enabled   = true
+backend   = pyinotify   ; watch the file directly (falls back to polling if inotify not available)
+logpath   = /var/log/lighttpd/access.log
+port      = http,https
+maxretry  = 10
+findtime  = 10m
+bantime   = 15m
+```
+
+3. Turn on lighttpd’s access-log
+```bash
+sudo lighty-enable-mod accesslog          # activates 10-accesslog.conf
+sudo systemctl reload lighttpd
+```
+- The default snippet writes to /var/log/lighttpd/access.log and uses the common-log format (one line per request).
+
+- Check:
+```bash
+# access.log should now exist, size > 0 after a page hit
+sudo ls -l /var/log/lighttpd/access.log
+```
+- Browse your WordPress site once, then:
+```bash
+# you should see the GET / HTTP/1.1 line(s)
+sudo tail /var/log/lighttpd/access.log
+```
+
+4. Add the filter for WordPress, create and edit file `wordpress.conf`
+```bash
+sudo nano /etc/fail2ban/filter.d/wordpress.conf
+```
+- add the lines below:
+```ini
+[Definition]
+failregex = ^<HOST> .* "(GET|POST) /wp-login\.php HTTP/.*"$
+ignoreregex =
+```
+
+5. Suppress the `allowipv6` warning, by creating a `fail2ban.local` file
+- modifying the original `fail2ban.conf` is not recommended because updates might overwrite the changes)
+```bash
+sudo nano /etc/fail2ban/fail2ban.local
+```
+- add the lines:
+```ini
+[Definition]
+allowipv6 = auto
+```
+
+6. Check config & restart & check status
+```bash
+# Check config, should end with "OK”
+sudo fail2ban-server -t
+# OK: configuration test is successful
+
+sudo systemctl restart fail2ban
+
+# check sshd and wordpress jails
+sudo fail2ban-client status
+# Status
+# |- Number of jail:	2
+# `- Jail list:	sshd, wordpress
+```
+
+7. Verify it fires
+- From a different terminal (or browser privacy window) hit [/wp-login.php](http://localhost:8088/wp-login.php) ~12 times with a bad password.
+
+- Check the jail again
+
+```bash
+sudo fail2ban-client status wordpress
+```
+- expected:
+```yaml
+|- Filter
+|  |- Currently failed:   12
+|  |- Total failed:       12
+`- Actions
+   |- Currently banned:   1
+   |- Total banned:       1
+   `- Banned IP list:     10.0.2.2
+```
+
+- to unban the host IP
+```bash
+# syntax: fail2ban-client set <jail-name> unbanip <IP>
+sudo      fail2ban-client set wordpress   unbanip 10.0.2.2
+
+# or if multiple jails, free from all the jails at once:
+sudo fail2ban-client unban 10.0.2.2
+```
+
+
+- Fail2ban now guards SSH and WordPress login attempts.
+
