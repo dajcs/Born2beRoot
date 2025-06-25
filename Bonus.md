@@ -53,15 +53,24 @@ ip -brief address
 # lo               UNKNOWN        127.0.0.1/8 ::1/128
 # enp0s3           UP             10.0.2.15/24 fe80::a00:27ff:fec5:549a/64
 ```
-The first address on the enp0s3 / eth0 interface is usually the VM's IP.
+- The first address on the enp0s3 / eth0 interface is usually the VM's IP.
 
 7. (VirtualBox) punch a hole if you’re in NAT mode \
 If your VM uses the default NAT adapter, forward port 80:
+
 
 ```bash
 # this command should be entered on the Ubuntu host
 VBoxManage modifyvm "Born2beRoot" --natpf1 "http,tcp,,8088,10.0.2.15,80"
 ```
+- `--natpf1` specifies that the rule applies to the first NAT network adapter (adapter 1).
+- `http`: The name of the rule (purely descriptive).
+- `tcp`: The protocol (can be tcp or udp).
+- `,,` The empty field (between tcp and 8088): Host IP (empty means all host IPs).
+- `8088`: The port on the host machine.
+- `10.0.2.15`: The IP address of the guest (the VM).
+- `80`: The port on the guest machine.
+
 
 Alternatively the port forwarding can be setup from the GUI - as seen at SSH host to guest setup.
 

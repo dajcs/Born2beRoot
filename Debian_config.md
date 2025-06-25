@@ -130,7 +130,7 @@ ssh root@127.0.0.1 -p 4242
 ---
 ## Note: SSH from Ubuntu/Windows host to the Debian VM
 - **Why**: This is one more extra test, but more importantly after this setup and ssh to Debian VM you can use the **copy/paste in the terminal**.
-- **Concept**: You will tell VirtualBox: "Any connection that comes to my host machine on a specific port (e.g., 8080) should be forwarded to the guest machine's IP on port (4242)."
+- **Concept**: You will tell VirtualBox: "Any connection that comes to my host machine on a specific port (e.g., 2222) should be forwarded to the guest machine's IP on port (4242)."
 - **Steps**:
     - Shut down your Debian VM.
     - In VirtualBox, select your Debian VM and go to Settings > Network.
@@ -141,17 +141,26 @@ ssh root@127.0.0.1 -p 4242
         - Name: SSH (or any name you like)
         - Protocol: TCP
         - Host IP: Leave blank
-        - Host Port: 8080 -- in theory you can pick any unused port above 1024, but better to use well known ports because some security software might catch your unusual communication (e.g. at 42 Luxembourg)
+        - Host Port: 2222 -- in theory you can pick any unused port above 1024, but port 4242 was not working at 42 Luxembourg, so I choose a different one
         - Guest IP: 10.0.2.15  (Your Debian VM's IP, check with command: hostname -I )
         - Guest Port: 4242 (The SSH port set up previously)
     - Click OK on all windows to save.
+
+Alternatively the Virtualbox GUI setting can be replaced by the command line below in the Host terminal:
+
+```bash
+# this command should be entered on the Ubuntu host
+VBoxManage modifyvm "Born2beRoot" --natpf1 "ssh,tcp,,2222,10.0.2.15,4242"
+```
+
+
     - Start your Debian VM.
 - **How to Connect from Ubuntu**:  \
-    Now, from your Ubuntu host terminal, you will SSH to your own host machine (localhost or 127.0.0.1) on the port you specified (8080). VirtualBox will catch this and forward it to the guest (on port 4242).
+    Now, from your Ubuntu host terminal, you will SSH to your own host machine (localhost or 127.0.0.1) on the port you specified (2222). VirtualBox will catch this and forward it to the guest (on port 4242).
     ```bash
     # On your Ubuntu Host
     # You are connecting to your own machine (localhost) on the forwarded port
-    ssh anemet@127.0.0.1 -p 8080
+    ssh anemet@127.0.0.1 -p 2222
     ```
 - **How to Connect from Windows**:  \
 If you have a Windows host, you can use the WSL (Windows Subsystem for Linux) terminal for login, but there is an extra step to find out the WSL terminal default gateway IP address. WSL and the Windows host are on different networks, so we have to use this gateway IP instead of localhost in the previous case.
@@ -161,7 +170,7 @@ If you have a Windows host, you can use the WSL (Windows Subsystem for Linux) te
     # 172.28.160.1
 
     # use this <def_GW_IP> instead of localhost to ssh to Debian
-    ssh anemet@172.28.160.1 -p 8080
+    ssh anemet@172.28.160.1 -p 2222
     ```
 ---
 
