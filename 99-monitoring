@@ -1,7 +1,9 @@
 #!/bin/bash
-# Broadcast system health to every logged-in TTY
 
-#── grab data ————————————————————————————————————————————————
+# Script for /etc/update-motd.d/ to display system health on login.
+
+# --- grab data ---
+
 arch=$(uname -snrvm)
 
 nr_sockets=$(lscpu | grep -i "Socket(s):" | awk '{print $NF}')
@@ -36,6 +38,7 @@ datetime=$(date)
 
 # ------------- build message -------------------------
 msg=$(cat <<EOF
+
 $arch
 
 # Nr CPU sockets : $nr_sockets
@@ -51,8 +54,10 @@ $arch
 # IP / MAC       : $ip_addr  ($mac_addr)
 # sudo Commands  : $sudo_runs
 # TimeStamp      : $datetime
+
 EOF
 )
 
-# ------------- broadcast $msg, -n: suppressing the banner ------
-wall -n "$msg"
+# print the message to standard output ————
+# The MOTD system will automatically capture and display
+/bin/echo "$msg"

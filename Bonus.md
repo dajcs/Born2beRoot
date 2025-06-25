@@ -186,14 +186,14 @@ EXIT;
 
 This finishes the “L-P-M” stack so WordPress can run.
 
-<!---
-1. Stop and remove Apache so it doesn’t fight lighttpd for port 80
+
+0. Make sure you don't have Apache so it doesn’t fight lighttpd for port 80
 ```bash
 sudo systemctl disable --now apache2
 sudo apt purge -y apache2 libapache2-mod-php8.2 apache2-bin apache2-utils apache2-data
 sudo apt autoremove -y          # toss the now-orphaned libs
 ```
---->
+
 
 1. Install FPM + the WordPress extensions
 ```bash

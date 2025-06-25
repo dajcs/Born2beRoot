@@ -463,9 +463,14 @@ sudo userdel -r demo
 #### 6.1.1 The architecture of the OS and its kernel version
 
 ```bash
-uname -a
-# Linux anemet42 6.1.0-37-amd64 #1 SMP PREEMPT_DYNAMIC Debian 6.1.140-1 (2025-05-22) x86_64 GNU/Linux
+uname -snrvm
+# Linux anemet42 6.1.0-37-amd64 #1 SMP PREEMPT_DYNAMIC Debian 6.1.140-1 (2025-05-22) x86_64
 ```
+- -s, --kernel-name `Linux`
+- -n, --nodename `anemet42`
+- -r, --kernel-release `6.1.0-37-amd64`
+- -v, --kernel-version `#1 SMP PREEMPT_DYNAMIC Debian 6.1.140-1 (2025-05-22)`
+- -m, --machine `x86_64`
 
 #### 6.1.2 The number of CPU sockets, CPU cores, virtual CPUs
 
@@ -548,17 +553,17 @@ mpstat
 # 05:14:10 PM  all    0.01    0.00    0.06    1.83    0.00    0.09    0.00    0.00    0.00   98.00
 
 # script command
-last_boot=$(who -b | awk '{print $3, $4}')
+cpu_pct=$(mpstat | grep "all" | awk '{print 100 - $NF}')
 ```
 
 #### 6.1.6 Last boot
 
 ```bash
-who -b
-#         system boot  2025-06-23 08:14
+uptime -s
+# 2025-06-25 18:56:06
 
 # script command
-         system boot  2025-06-23 08:14
+last_boot=$(uptime -s)
 ```
 
 #### 6.1.7 LVM active
@@ -633,39 +638,24 @@ mac_addr=$(ip link show | awk '/link\/ether/ {print $2; exit}')
 
 #### 6.1.12 Number of commands executed with `sudo`
 
-```bash
-ls -l /var/log/sudo/anemet
-# total 104
-# drwx------ 2 root root 4096 Jun 23 19:02 20250623-190221-ls
-# drwx------ 2 root root 4096 Jun 23 19:02 20250623-190238-ls
-# drwx------ 2 root root 4096 Jun 23 19:02 20250623-190243-ls
-# drwx------ 2 root root 4096 Jun 23 19:03 20250623-190308-ls
-# drwx------ 2 root root 4096 Jun 23 19:05 20250623-190511-cat
-# drwx------ 2 root root 4096 Jun 23 19:36 20250623-193630-find
-# drwx------ 2 root root 4096 Jun 23 19:37 20250623-193714-find
-# drwx------ 2 root root 4096 Jun 23 19:37 20250623-193719-find
-# drwx------ 2 root root 4096 Jun 23 19:38 20250623-193808-find
-# drwx------ 2 root root 4096 Jun 23 19:42 20250623-194237-monitoring.sh
-# drwx------ 2 root root 4096 Jun 23 19:46 20250623-194651-monitoring.sh
-# drwx------ 2 root root 4096 Jun 23 19:47 20250623-194700-monitoring.sh
-# drwx------ 2 root root 4096 Jun 23 19:47 20250623-194709-monitoring.sh
-# drwx------ 2 root root 4096 Jun 23 19:50 20250623-195042-monitoring.sh
-# drwx------ 2 root root 4096 Jun 23 19:54 20250623-195459-monitoring.sh
-# drwx------ 2 root root 4096 Jun 23 19:56 20250623-195637-monitoring.sh
-# drwx------ 2 root root 4096 Jun 23 19:56 20250623-195641-monitoring.sh
-# drwx------ 2 root root 4096 Jun 23 19:56 20250623-195643-monitoring.sh
-# drwx------ 2 root root 4096 Jun 23 19:56 20250623-195650-monitoring.sh
-# drwx------ 2 root root 4096 Jun 23 19:57 20250623-195712-who
-# drwx------ 2 root root 4096 Jun 23 19:59 20250623-195948-cat
-# drwx------ 2 root root 4096 Jun 23 20:06 20250623-200645-ls
-# drwx------ 2 root root 4096 Jun 23 20:11 20250623-201157-find
-# drwx------ 2 root root 4096 Jun 23 20:12 20250623-201208-find
-# drwx------ 2 root root 4096 Jun 23 20:12 20250623-201214-find
-# drwx------ 2 root root 4096 Jun 23 20:12 20250623-201227-find
 
-# script command
-sudo_runs=$(find /var/log/sudo -mindepth 2 -type d -not -name '*-monitoring.sh' 2>/dev/null | wc -l)
+```bash
+journalctl -q _COMM=sudo | tail
+# Jun 25 19:35:27 anemet42 sudo[1381]: pam_unix(sudo:session): session closed for user root
+# Jun 25 19:35:32 anemet42 sudo[1392]:   anemet : TTY=pts/0 ; PWD=/etc/update-motd.d ; USER=root ; TSID=20250625-193532-nano ; # COMMAND=/usr/bin/nano 99-monitoring-banner
+# Jun 25 19:35:32 anemet42 sudo[1392]: pam_unix(sudo:session): session opened for user root(uid=0) by anemet(uid=1000)
+# Jun 25 19:39:54 anemet42 sudo[1392]: pam_unix(sudo:session): session closed for user root
+# Jun 25 19:43:39 anemet42 sudo[1566]:   anemet : TTY=pts/2 ; PWD=/etc/update-motd.d ; USER=root ; TSID=20250625-194339-chmod ; # COMMAND=/usr/bin/chmod -x 10-uname
+# Jun 25 19:43:39 anemet42 sudo[1566]: pam_unix(sudo:session): session opened for user root(uid=0) by anemet(uid=1000)
+# Jun 25 19:43:39 anemet42 sudo[1566]: pam_unix(sudo:session): session closed for user root
+# Jun 25 21:05:33 anemet42 sudo[2178]:   anemet : TTY=pts/2 ; PWD=/etc/update-motd.d ; USER=root ; TSID=20250625-210533-chmod ; # COMMAND=/usr/bin/chmod +x 10-uname
+# Jun 25 21:05:33 anemet42 sudo[2178]: pam_unix(sudo:session): session opened for user root(uid=0) by anemet(uid=1000)
+# Jun 25 21:05:33 anemet42 sudo[2178]: pam_unix(sudo:session): session closed for user root
+
+#script command
+sudo_runs=$(journalctl -q _COMM=sudo | grep "COMMAND=" | wc -l)
 ```
+
 
 #### 6.1.13 Printing out the collected results
 
@@ -692,8 +682,9 @@ $arch
 EOF
 )
 
-#── broadcast without the “wall” banner ————————————————
-/usr/bin/wall -n "$msg"
+
+# ------------- broadcast $msg, -n: suppressing the banner ------
+wall -n "$msg"
 
 ```
 
@@ -706,7 +697,7 @@ Here is the assembled result of the script: [monitoring.sh](./monitoring.sh)
 Copy the content of [monitoring.sh](./monitoring.sh) into a file in the home directory.
 
 ```bash
-sudo vi /home/monitoring.sh
+sudo nano /home/monitoring.sh
 ```
 
 Make executable
@@ -722,33 +713,114 @@ Edit crontab
 sudo crontab -u root -e
 ```
 
-After line23 `# m h dom mon dow command`
+- After last comment line `# m h dom mon dow command`
+    - `m` - minutes
+    - `h` - hours
+    - `dom` - day of month
+    - `mon` - month
+    - `dow` - day of week
+    - `command` - command to be executed
 
-Put line24
-
+- edit the next line as follows:
 ```bash
 # m   h  dom mon dow  command
-*/10  *   *   *   *   sh /home/monitoring.sh
+*/10  *   *   *   *   /home/anemet/monitoring.sh
 ```
 
 Check scheduled jobs
 
 ```bash
+# -l -> list
 sudo crontab -u root -l
+# # m   h  dom mon dow   command
+# */10  *   *   *   *    /home/anemet/monitoring.sh
 ```
 
-<!---
-### Disable `dhcpclient` open port 68
+There is one more task:
+> **At server startup**, the script will display some information (listed below) on all terminals
+and every 10 minutes ...
 
-> dont, needed to run package manager
+We could add the `@reboot` condition to the crontab:
 
+```ini
+# m   h  dom mon dow   command
+*/10  *   *   *   *    /home/anemet/monitoring.sh
+@reboot                sleep 20 && /home/anemet/monitoring.sh
+```
+- here we have several issues:
+    - if we're executing the script without a delay of 20 seconds (`sleep 20`), then in the early boot phase there is no terminal ready yet to receive the display message
+    - putting a random timer is still no perfect solution, the message will be displayed only if a user is logging in within the 20 seconds after reboot, otherwise the message is lost
+
+- A better solution could be when the monitoring message is displayed at user login.
+
+Let's implement the better solution.
+
+Comment out the `@reboot` in the crontab:
 ```bash
-sudo vi /etc/network/interfaces
+sudo crontab -u root -e
+
+# comment out or delete the line starting with @reboot
 ```
+```ini
+# m   h  dom mon dow   command
+*/10  *   *   *   *    /home/anemet/monitoring.sh
+#@reboot                sleep 20 && /home/anemet/monitoring.sh
+```
+- save the file
 
-Comment out `iface enp0s3 inet dhcp`
-
+- goto the update "Message Of The Day" directory
 ```bash
-sudo reboot
+cd /etc/update-motd.d/
 ```
---->
+- copy file `~/monitoring.sh` as `99-monitoring`
+```bash
+sudo cp ~/monitoring.sh ./99-monitoring
+```
+- edit file `99-monitoring` and replace in the last line the `wall -n` command with `echo`
+```bash
+sudo vim 99-monitoring
+
+# replace: wall -n  "$msg"
+# with   : echo "$msg"
+```
+- the file `10-uname` in the `update-motd.d` directory is displaying the architecture, which is already in our script, therefore we can take away the executable rights from `10-uname`:
+```bash
+sudo chmod -x 10-uname
+
+# check files in directory
+ ls -l
+total 8
+-rw-r--r-- 1 root root   23 Apr  4  2017 10-uname
+-rwxr-xr-x 1 root root 1776 Jun 25 23:44 99-monitoring
+```
+
+- check if these settings display monitoring message at login
+```bash
+ssh anemet@localhost -p 4242
+# anemet@localhost's password:
+# 
+# Linux anemet42 6.1.0-37-amd64 #1 SMP PREEMPT_DYNAMIC Debian 6.1.140-1 (2025-05-22) x86_64
+# 
+# # Nr CPU sockets : 1
+# # Phys CPU cores : 2
+# # Virt CPU cores : 2
+# # RAM Usage      : 514/1967 MB (26.1%)
+# # Disk Usage     : 2302/30887 GB (7.5%)
+# # CPU Load       : 0.49%
+# # Last Boot      : 2025-06-25 18:56:06
+# # LVM Active     : yes
+# # TCP Conns      : 5 ESTABLISHED
+# # Users Logged   : 3
+# # IP / MAC       : 10.0.2.15  (08:00:27:c5:54:9a)
+# # sudo Commands  : 408
+# # TimeStamp      : Wed Jun 25 23:52:00 CEST 2025
+# 
+# The programs included with the Debian GNU/Linux system are free software;
+# the exact distribution terms for each program are described in the
+# individual files in /usr/share/doc/*/copyright.
+# 
+# Debian GNU/Linux comes with ABSOLUTELY NO WARRANTY, to the extent
+# permitted by applicable law.
+# Last login: Wed Jun 25 23:51:40 2025 from 172.28.161.182
+# anemet@anemet42:~$
+```
