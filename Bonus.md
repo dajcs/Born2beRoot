@@ -321,7 +321,7 @@ rm /tmp/latest.tar.gz
 
 ## 5. Extra Service
 
-We have to set up a service our choice that is useful (NGINX / Apache2 excluded!) and we have to justify our choice.
+We have to set up a service of our choice that is useful (NGINX / Apache2 excluded!) and we have to justify our choice.
 
 Here are some services to choose from:
 

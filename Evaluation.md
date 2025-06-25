@@ -1,12 +1,32 @@
 # Evaluation Questions
 
-Create a `signature.txt` of the virtual machine image
+Create a `signature.txt` of the virtual machine image on the Host machine.
 
 ```bash
-sha1sum ~/VirtualBox\ VMs/Born2beRoot/Born2beRoot.vdi > signature.txt
-```
+# command on Ubuntu host terminal
+sha1sum ~/goinfre/Born2beRoot/Born2beRoot.vdi > signature.txt
 
-## How a Virtual Machine works
+# check result
+cat signature.txt
+# 4070117ace51c2060df23cafb3b344c3444830b7  /home/anemet/goinfre/Born2beRoot/Born2beRoot.vdi
+
+```
+# Mandatory part
+
+## Project overview
+
+The student should explain simply:
+- how a virtual machine works
+- the choice of operating system
+- basic differences between CentOS and Debian
+- the purpose of VMs
+- if OS == CentOS: what is SELinux and DNF?
+- if OS == Debian:
+    - difference between `aptitude` and `apt`
+    - what is APPArmor?
+- during the defense the monitoring script should display info every 10 minutes
+
+### How a Virtual Machine works
 
 A virtual machine uses software emulation of hardware to create an isolated environment on top of hardware where a separate system with its own OS can be run. Therefore allowing for things like running Debian inside a Mac.
 
@@ -19,18 +39,18 @@ The **virtual machine manager** or **monitor** is a software that enables the cr
 
 
 
-## Choice of Operating System
+### Choice of Operating System
 
 It's easier to install and configure than CentOS (and I haven't used CentOS before). I use Ubuntu and Pop OS for personal use which are both Debian flavours and wanted to understand them more deeply.
 
-## The basic differences between CentOS and Debian
+### The basic differences between CentOS and Debian
 
 CentOS vs Debian are two flavors of Linux operating systems. CentOS, as said above, is a Linux distribution. It is free and open-source. It is enterprise-class – industries can use meaning for server building; it is supported by a large community and is functionally supported by its upstream source, Red Hat Enterprise Linux. Debian is a Unix like computer operating system that is made up of open source components. It is built and supported by a group of individuals who are under the Debian project.
 
 Debian uses Linux as its Kernel. Fedora, CentOS, Oracle Linux are all different distribution from Red Hat Linux and are variant of RedHat Linux. Ubuntu, Kali, etc., are variant of Debian. CentOS vs Debian both are used as internet servers or web servers like web, email, FTP, etc.
 
 
-## The purpose of virtual machines
+### The purpose of virtual machines
 
 VMs may be deployed to accommodate different levels of processing power needs, to run software that requires a different operating system, or to test applications in a safe, sandboxed environment.
 
@@ -44,7 +64,7 @@ A Type 2 hypervisor may function **slower** than a Type 1, as all of its command
 
 
 
-## The difference between `aptitude` and `apt`
+### The difference between `aptitude` and `apt`
 
 Aptitude is a higher-level package manager while APT is lower-level package manager which can be used by other
 higher-level package managers.
@@ -71,8 +91,7 @@ Imagine **dpkg** as the foundation of a house, responsible for the structural
 
 
 
-## What is APPArmor
-
+### What is APPArmor
 
 
 **AppArmor (on Debian) vs SELinux (on CentOS)**
@@ -99,7 +118,14 @@ AppArmor ("Application Armor") is a Linux kernel security module that allows the
 Profiles can allow capabilities like network access, raw socket access, and the permission to read, write, or execute files on matching paths.
 
 [Read more](https://en.wikipedia.org/wiki/AppArmor)
-## Check
+
+
+## Simple setup
+
+- ensure the VM has no GUI.
+- login to VM with a user different from root
+
+### Check
 
 - [x] Script running every 10min
 - [x] No graphical user interface
@@ -107,31 +133,34 @@ Profiles can allow capabilities like network access, raw socket access, and the 
 - [x] Login with `anemet`
 - [x] Password must follow rules
 
-## Check that the UFW service is started
+### Check that the UFW service is started
 
 ```bash
 sudo ufw status
 ```
 
-## Check that the SSH service is started
+### Check that the SSH service is started
 
 ```bash
 sudo service ssh status
 ```
 
-## Check that the operating system is Debian
+### Check that the operating system is Debian
 
 ```bash
-cat /etc/os-release | grep PRETTY_NAME
+cat /etc/os-release | grep PRETTY
 ```
 
-## Check that `anemet` is member of `sudo` and `user42` groups
+## User
+
+
+### Check that `anemet` is member of `sudo` and `user42` groups
 
 ```bash
 groups anemet
 ```
 
-## Check password policy rules
+### Check password policy rules
 
 Password expiry: line ~164
 
@@ -150,20 +179,20 @@ Password policy: line 25.
 vim /etc/security/pwquality.conf
 ```
 ```
+difok           = 7         # ≥7 chars different from previous
 minlen          = 10        # ≥10 chars
+dcredit         = -1        # at least 1 digit
 ucredit         = -1        # at least 1 uppercase
 lcredit         = -1        # at least 1 lowercase
-dcredit         = -1        # at least 1 digit
 maxrepeat       = 3         # no “aaaa”, “1111”…
 usercheck       = 1         # forbid name inside password
-difok           = 7         # ≥7 chars different from previous
 enforce_for_root            # root must obey (except difok)
 ```
 
 ### Create a new user
 
 ```bash
-sudo adduser new_user
+sudo adduser demo
 ```
 
 ### Assign password
@@ -180,13 +209,13 @@ vim /etc/security/pwquality.conf
 
 ```bash
 sudo addgroup evaluating
-sudo adduser new_user evaluating
+sudo adduser demo evaluating
 ```
 
 ### Check that user belongs to new group
 
 ```bash
-groups new_user
+groups demo
 ```
 
 ## Explain advantages of password policy and advantages and disadvantages of policy implementation
@@ -208,9 +237,9 @@ hostname
 ## Modify hostname with evaluator login and reboot to confirm change
 
 ```bash
-sudo adduser new_user sudo
-sudo login new_user
-sudo vim /etc/hostname # change to new_user42
+sudo adduser demo sudo
+sudo login demo
+sudo vim /etc/hostname # change to demo42
 sudo reboot
 ```
 
@@ -265,7 +294,7 @@ dpkg -l | grep sudo
 ## Assign new user to `sudo` group
 
 ```bash
-sudo adduser new_user sudo
+sudo adduser demo sudo
 ```
 
 ## Explain value and operation of sudo using examples
@@ -275,8 +304,8 @@ Sudo stands for SuperUser DO and is used to access restricted files and operatio
 The sudo command temporarily elevates privileges allowing users to complete sensitive tasks without logging in as the root user.
 
 ```bash
-apt-get update # Error 13: Permission denied
-sudo apt-get update
+apt update # Error 13: Permission denied
+sudo apt update
 ```
 
 [Read more](https://phoenixnap.com/kb/linux-sudo-command)
@@ -290,7 +319,7 @@ sudo visudo
 
 ```bash
 ###############################################################################
-##  Hardening rules – required by born2beRoot
+##  Hardening rules – required by Born2beRoot
 ###############################################################################
 
 # 3 attempts max
@@ -301,14 +330,16 @@ Defaults        badpass_message="Access denied: incorrect password."
 
 # Full I/O logging (command, stdin, stdout, stderr)
 Defaults        log_input, log_output
-Defaults        iolog_dir=/var/log/sudo/%{user}         # sub-dir per user
-Defaults        iolog_file=%{command}_%T                # file per run (timestamp)
+# sub-dir per user
+Defaults        iolog_dir=/var/log/sudo/%{user}
+# file per run (timestamp)
+Defaults        iolog_file=%Y%m%d-%H%M%S-%{command}
 
 # Force an attached TTY
 Defaults        requiretty
 
 # Tight PATH in sudo context
-Defaults secure_path="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/snap/bin"
+Defaults        secure_path="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/snap/bin"
 ```
 
 ### Why **Force an attached TTY** ?
