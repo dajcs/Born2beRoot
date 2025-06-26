@@ -11,19 +11,21 @@ cat signature.txt
 # 4070117ace51c2060df23cafb3b344c3444830b7  /home/anemet/goinfre/Born2beRoot/Born2beRoot.vdi
 
 ```
+
 # Mandatory part
 
 ## Project overview
 
 The student should explain simply:
+
 - how a virtual machine works
 - the choice of operating system
 - basic differences between CentOS and Debian
 - the purpose of VMs
 - if OS == CentOS: what is SELinux and DNF?
 - if OS == Debian:
-    - difference between `aptitude` and `apt`
-    - what is APPArmor?
+  - difference between `aptitude` and `apt`
+  - what is APPArmor?
 - during the defense the monitoring script should display info every 10 minutes
 
 ### How a Virtual Machine works
@@ -33,11 +35,10 @@ A virtual machine uses software emulation of hardware to create an isolated envi
 In order to run a separate secondary OS on your machine, you’ll need a Virtual Machine. It's like a computer program that acts like a separate computer, so a virtual computer inside a real computer. It runs inside your physical computer but is isolated from it. It has its own "virtual" hardware (lCPU, memory, storage…) that is simulated by software (hypervisors).
 
 ### Virtualization and the Hypervisor(VMM)
+
 Virtualization is the process of creating a virtual machine on a physical machine with the help of hypervisors which are a lightweight software layer. The hypervisor acts like an intermediate or also referred to as virtualization layer between the physical hardware of the host the machine and the virtual machines and the applications running on them. Think of the hardware as a restaurant which have appliances (stove, oven…), the chef is the hypervisor taking orders (processes) from the customers (OS and apps) of each table(VM) in the restaurant.
 
 The **virtual machine manager** or **monitor** is a software that enables the creation and management of virtual machines. It manages the backend operation of these VMs by allocating the necessary computing, memory, storage and input/output resources. It also offers an interface that manages the status and availability of VMs that are installed over a single host or interconnected hosts. (VirtualBox is a type-2 hypervisor)
-
-
 
 ### Choice of Operating System
 
@@ -54,7 +55,7 @@ Debian uses Linux as its Kernel. Fedora, CentOS, Oracle Linux are all different 
 
 VMs may be deployed to accommodate different levels of processing power needs, to run software that requires a different operating system, or to test applications in a safe, sandboxed environment.
 
-Hypervisors are of two types, the **first one** being the **bare-metal** hypervisors, they don’t need to load an underlaying OS that exists on the host machine, but instead have direct contact with the hardware through their own integrated kernel. Microsoft designates **Hyper-V** as a Type 1 hypervisor. Hyper-V installs on Windows but runs directly on the physical hardware, inserting itself underneath the host OS. All guest operating systems then run through the hypervisor, but the host operating system gets special access to the hardware, giving it a performance advantage.
+Hypervisors are of two types, the **first one** being the **bare-metal** hypervisors, they don’t need to load an underlying OS that exists on the host machine, but instead have direct contact with the hardware through their own integrated kernel. Microsoft designates **Hyper-V** as a Type 1 hypervisor. Hyper-V installs on Windows but runs directly on the physical hardware, inserting itself underneath the host OS. All guest operating systems then run through the hypervisor, but the host operating system gets special access to the hardware, giving it a performance advantage.
 
 **The second** type are the hosted hyper-vs, they need the host machine kernel’s (OS) to establish the connection between the hardware and the VM. A Type 2 hypervisor doesn’t run directly on the underlying hardware. Instead, it runs as an application in an OS (**VirtualBox**, **VMware Fusion**). Type 2 hypervisors rarely show up in server-based environments. Instead, they’re suitable for individual PC users needing to run multiple operating systems.
 
@@ -192,6 +193,7 @@ cat /etc/login.defs | grep "^PASS_"
 # PASS_MIN_DAYS	2
 # PASS_WARN_AGE	7
 ```
+
 ```bash
 PASS_MAX_DAYS   30   # expire after 30 days
 PASS_MIN_DAYS    2   # must wait 2 days before changing again
@@ -211,6 +213,7 @@ cat /etc/security/pwquality.conf | egrep "difok|minlen|dcredit|ucredit|lcredit|m
 # usercheck = 1
 # enforce_for_root
 ```
+
 ```bash
 difok           = 7         # ≥7 chars different from previous
 minlen          = 10        # ≥10 chars
@@ -548,8 +551,24 @@ sudo sudoreplay /var/log/sudo/anemet/20250626-111359-apt
 # Building dependency tree... Done
 # Reading state information... Done
 # 1 package can be upgraded. Run 'apt list --upgradable' to see it.
-
 ```
+
+### delete user `demo` and group `evaluating`
+
+```bash
+sudo deluser --remove-home demo
+# [sudo] password for anemet:
+# Looking for files to backup/remove ...
+# Removing files ...
+# Removing crontab ...
+# Removing user `demo' ...
+# Done.
+```
+
+```bash
+sudo groupdel evaluating
+```
+
 
 
 ## Check that UFW is properly installed
@@ -925,7 +944,7 @@ sudo apt install sysstat
 
 ```bash
 man mpstat
-       mpstat - Report processors related statistics.
+#       mpstat - Report processors related statistics.
 ```
 
 ```bash
@@ -941,10 +960,7 @@ cpu_pct=$(mpstat | grep "all" | awk '{print 100 - $NF}')
 
 ### last_boot
 
-```bash
-uptime -s
-# 2025-06-25 18:56:06
-```
+
 ```bash
 man uptime
 
@@ -955,75 +971,244 @@ man uptime
 ```
 
 ```bash
+uptime -s
+# 2025-06-25 18:56:06
+```
+
+```bash
 # script command
 last_boot=$(uptime -s)
 ```
 
-### lvm_partitions
+### LVM active
 
 ```bash
-lvm_partitions=$(lsblk | grep -c "lvm")
+man lsblk
+# NAME
+#        lsblk - list block devices
+# 
+# SYNOPSIS
+#        lsblk [options] [device...]
+# 
+# DESCRIPTION
+#        lsblk lists information about all available or the specified block devices. The lsblk command reads the sysfs filesystem
+#        and udev db to gather information. If the udev db is not available or lsblk is compiled without udev support, then it
+#        tries to read LABELs, UUIDs and filesystem types from the block device. In this case root permissions are necessary.
 ```
-
-Count `lvm` type partitions from `lsblk` command output.
-
-### lvm_is_used
 
 ```bash
-lvm_is_used=$(if [ $lvm_partitions -eq 0 ]; then echo no; else echo yes; fi)
+lsblk
+# NAME                    MAJ:MIN RM  SIZE RO TYPE  MOUNTPOINTS
+# sda                       8:0    0   31G  0 disk
+# ├─sda1                    8:1    0  476M  0 part  /boot
+# ├─sda2                    8:2    0    1K  0 part
+# └─sda5                    8:5    0 30.5G  0 part
+#   └─sda5_crypt          254:0    0 30.5G  0 crypt
+#     ├─LVMGroup-root     254:1    0  9.3G  0 lvm   /
+#     ├─LVMGroup-swap     254:2    0  2.1G  0 lvm   [SWAP]
+#     ├─LVMGroup-home     254:3    0  4.7G  0 lvm   /home
+#     ├─LVMGroup-var      254:4    0  2.8G  0 lvm   /var
+#     ├─LVMGroup-srv      254:5    0  2.8G  0 lvm   /srv
+#     ├─LVMGroup-tmp      254:6    0  2.8G  0 lvm   /tmp
+#     └─LVMGroup-var--log 254:7    0    6G  0 lvm   /var/log
+# sr0                      11:0    1 1024M  0 rom
 ```
 
-Conditional to check if previous variable is zero or not.
+```bash
+# script command
+lvm_active=$(lsblk | grep -q " lvm " && echo "yes" || echo "no")
+```
 
 ### tcp_connections
 
 ```bash
-# [$ sudo apt-get install net-tools]
-tcp_connections=$(cat /proc/net/sockstat{,6} | awk '$1 == "TCP:" {print $3}')
+man ss
+# NAME
+#        ss - another utility to investigate sockets
+# 
+# SYNOPSIS
+#        ss [options] [ FILTER ]
+# 
+# DESCRIPTION
+#        ss  is  used  to  dump socket statistics. It allows showing information similar to netstat.  It can display more TCP and
+#        state information than other tools.
+# 
+# OPTIONS
+#        When no option is used ss displays a list of open non-listening sockets (e.g. TCP/UNIX/UDP) that have  established  con‐
+#        nection.
+# 
+#        -a, --all
+#               Display both listening and non-listening (for TCP this means established connections) sockets.
+#        -t, --tcp
+#               Display TCP sockets.
+# 
+# USAGE EXAMPLES
+#        ss -t -a
+#               Display all TCP sockets.
 ```
 
-[Read more](https://unix.stackexchange.com/questions/67150/getting-current-tcp-connection-count-on-a-system)
+```bash
+ss -ta
+# State         Recv-Q        Send-Q                Local Address:Port                 Peer Address:Port         Process
+# LISTEN        0             128                         0.0.0.0:4242                      0.0.0.0:*
+# ESTAB         0             0                         10.0.2.15:4242                     10.0.2.2:46420
+# LISTEN        0             128                            [::]:4242                         [::]:*
+```
 
-`/proc/net/sockstat{,6}` fies include connections established count.
-
-Find line where first is `TCP:` and print third value which is the `inuse` (in use) amount.
+```bash
+# script command
+tcp_conn=$(ss -ta | grep ESTAB | wc -l)
+```
 
 ### users_logged_in
 
 ```bash
-users_logged_in=$(w -h | wc -l)
+man who
+# NAME
+#        who - show who is logged on
+# 
+# SYNOPSIS
+#        who [OPTION]... [ FILE | ARG1 ARG2 ]
+# 
+# DESCRIPTION
+#        Print information about users who are currently logged in.
 ```
 
-`w` - Show who is logged on and what they are doing.
-`-h` flag is without header.
-Each line has info about a logged in user.
-Count of lines is how many users logged in.
+```bash
+who
+# anemet   tty1         2025-06-23 08:14
+# anemet   pts/0        2025-06-23 08:16 (10.0.2.2)
+```
+
+```bash
+# script command
+logged_users=$(who | wc -l)
+```
 
 ### ipv4_address
 
 ```bash
-ipv4_address=$(hostname -I)
+man hostname
+# NAME
+#        hostname - show or set the system's host name
+# 
+#        -I, --all-ip-addresses
+#               Display  all network addresses of the host. This option enumerates all configured addresses on all network inter‐
+#               faces. The loopback interface and IPv6 link-local addresses are omitted. Contrary to option -i, this option  does
+#               not depend on name resolution. Do not make any assumptions about the order of the output.
 ```
 
-`-I` flag to display IP address.
+```bash
+hostname -I
+# 10.0.2.15
+```
+
+```bash
+# script command
+ip_addr=$(hostname -I | awk '{print $1}')
+```
 
 ### mac_address
 
 ```bash
-mac_address=$(ip link show | awk '$1 == "link/ether" {print $2}')
+man ip-link
+#    ip link show - display device attributes
+#        dev NAME (default)
+#               NAME specifies the network device to show.
+# 
+#        group GROUP
+#               GROUP specifies what group of devices to show.
+# 
+#        up     only display running interfaces.
+# 
+#        master DEVICE
+#               DEVICE specifies the master device which enslaves devices to show.
+# 
+#        vrf NAME
+#               NAME specifies the VRF which enslaves devices to show.
+# 
+#        type TYPE
+#               TYPE specifies the type of devices to show.
+# 
+#               Note that the type name is not checked against the list of supported types - instead it is sent as-is to the ker‐
+#               nel. Later it is used to filter the returned interface list by comparing it with the relevant attribute in case
+#               the kernel didn't filter already. Therefore any string is accepted, but may lead to empty output.
+# 
+#        nomaster
+#               only show devices with no master
 ```
 
-`ip` util with `link` object, then select line where `link/ether` is and print second column: MAC address.
+```bash
+ip link show
+# 1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN mode DEFAULT group default qlen 1000
+#     link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+# 2: enp0s3: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP mode DEFAULT group default qlen 1000
+#     link/ether 08:00:27:c5:54:9a brd ff:ff:ff:ff:ff:ff
+```
+
+```bash
+#script command
+mac_addr=$(ip link show | awk '/link\/ether/ {print $2; exit}')
+```
 
 ### sudo_commands_count
 
 ```bash
-sudo_commands_count=$(journalctl _COMM=sudo | grep -c COMMAND)
+man journalctl
+# NAME
+#        journalctl - Query the systemd journal
+
+# SYNOPSIS
+#        journalctl [OPTIONS...] [MATCHES...]
+
+# DESCRIPTION
+#        journalctl may be used to query the contents of the systemd(1) journal as written by systemd-journald.service(8).
+# 
+#        If called without parameters, it will show the full contents of the journal, starting with the oldest entry collected.
+# 
+#        If one or more match arguments are passed, the output is filtered accordingly. A match is in the format "FIELD=VALUE",
+#        e.g.  "_SYSTEMD_UNIT=httpd.service", referring to the components of a structured journal entry. See systemd.journal-
+#        fields(7) for a list of well-known fields. If multiple matches are specified matching different fields, the log entries
+#        are filtered by both, i.e. the resulting output will show only entries matching all the specified matches of this kind.
+#        If two matches apply to the same field, then they are automatically matched as alternatives, i.e. the resulting output
+#        will show entries matching any of the specified matches for the same field. Finally, the character "+" may appear as a
+#        separate word between other terms on the command line. This causes all matches before and after to be combined in a
+#        disjunction (i.e. logical OR).
+# 
+#        It is also possible to filter the entries by specifying an absolute file path as an argument. The file path may be a
+#        file or a symbolic link and the file must exist at the time of the query. If a file path refers to an executable binary,
+#        an "_EXE=" match for the canonicalized binary path is added to the query. If a file path refers to an executable script,
+#        a "_COMM=" match for the script name is added to the query. If a file path refers to a device node, "_KERNEL_DEVICE="
+#  
+#        -q, --quiet
+#            Suppresses all informational messages (i.e. "-- Journal begins at ...", "-- Reboot --"), any warning messages
+#            regarding inaccessible system journals when run as a normal user.
+ ```
+
+
+```bash
+journalctl -q _COMM=sudo | tail
+# Jun 25 19:35:27 anemet42 sudo[1381]: pam_unix(sudo:session): session closed for user root
+# Jun 25 19:35:32 anemet42 sudo[1392]:   anemet : TTY=pts/0 ; PWD=/etc/update-motd.d ; USER=root ; TSID=20250625-193532-nano ; # COMMAND=/usr/bin/nano 99-monitoring-banner
+# Jun 25 19:35:32 anemet42 sudo[1392]: pam_unix(sudo:session): session opened for user root(uid=0) by anemet(uid=1000)
+# Jun 25 19:39:54 anemet42 sudo[1392]: pam_unix(sudo:session): session closed for user root
+# Jun 25 19:43:39 anemet42 sudo[1566]:   anemet : TTY=pts/2 ; PWD=/etc/update-motd.d ; USER=root ; TSID=20250625-194339-chmod ; # COMMAND=/usr/bin/chmod -x 10-uname
+# Jun 25 19:43:39 anemet42 sudo[1566]: pam_unix(sudo:session): session opened for user root(uid=0) by anemet(uid=1000)
+# Jun 25 19:43:39 anemet42 sudo[1566]: pam_unix(sudo:session): session closed for user root
+# Jun 25 21:05:33 anemet42 sudo[2178]:   anemet : TTY=pts/2 ; PWD=/etc/update-motd.d ; USER=root ; TSID=20250625-210533-chmod ; # COMMAND=/usr/bin/chmod +x 10-uname
+# Jun 25 21:05:33 anemet42 sudo[2178]: pam_unix(sudo:session): session opened for user root(uid=0) by anemet(uid=1000)
+# Jun 25 21:05:33 anemet42 sudo[2178]: pam_unix(sudo:session): session closed for user root
+```
+
+```bash
+#script command
+sudo_runs=$(journalctl -q _COMM=sudo | grep "COMMAND=" | wc -l)
 ```
 
 [https://www.digitalocean.com/community/tutorials/how-to-use-journalctl-to-view-and-manipulate-systemd-logs](https://www.digitalocean.com/community/tutorials/how-to-use-journalctl-to-view-and-manipulate-systemd-logs)
 
 If a file path refers to an executable script, a "_COMM=" match for the script name is added to the query.
+
 
 ## What is `cron`
 
@@ -1034,13 +1219,13 @@ The cron command-line utility, also known as cron job is a job scheduler on Unix
 ### How to set up the script to run every 10mins
 
 ```bash
-sudo crontab -e
+sudo crontab -u root -e
 ```
 
 Add following line
 
-```
-*/10 * * * * /usr/local/bin/monitoring.sh
+```cpp
+*/10 * * * * /home/anemet/monitoring.sh
 ```
 
 ### Verify correct functioning of the script
@@ -1050,13 +1235,13 @@ Check print out in console.
 ### Change run of script to every minute
 
 ```bash
-sudo crontab -e
+sudo crontab -u root -e
 ```
 
 Add following line
 
-```
-*/1 * * * * /home/monitoring.sh
+```cpp
+*/1 * * * * /home/anemet/monitoring.sh
 ```
 
 ### Make the script stop running after reboot without modifying it
@@ -1064,12 +1249,12 @@ Add following line
 Remove the scheduling line on the crontab
 
 ```bash
-sudo crontab -e
+sudo crontab -u root -e
 ```
 
-Remove following line/s
+commet out following line/s
 
-```
+```cpp
 @reboot /home/monitoring.sh
 */1 * * * * /home/monitoring.sh
 ```

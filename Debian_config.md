@@ -649,7 +649,6 @@ mac_addr=$(ip link show | awk '/link\/ether/ {print $2; exit}')
 
 #### 6.1.14 Number of commands executed with `sudo`
 
-
 ```bash
 journalctl -q _COMM=sudo | tail
 # Jun 25 19:35:27 anemet42 sudo[1381]: pam_unix(sudo:session): session closed for user root
