@@ -637,22 +637,73 @@ sudo ufw status numbered
 # [ 6] 8080 (v6)                  ALLOW IN    Anywhere (v6)
 ```
 
-Delete rule
+Delete rule [6]
 
 ```bash
-sudo ufw delete $NUMBER
+sudo ufw delete 6
+# Deleting:
+#  allow 8080
+# Proceed with operation (y|n)? y
+# Rule deleted (v6)
+```
+
+```bash
+sudo ufw status numbered
+# Status: active
+#
+#      To                         Action      From
+#      --                         ------      ----
+# [ 1] 4242/tcp                   ALLOW IN    Anywhere                   # SSH service
+# [ 2] 80                         ALLOW IN    Anywhere
+# [ 3] 8080                       ALLOW IN    Anywhere
+# [ 4] 4242/tcp (v6)              ALLOW IN    Anywhere (v6)              # SSH service
+# [ 5] 80 (v6)                    ALLOW IN    Anywhere (v6)
+```
+
+```bash
+sudo ufw delete allow 8080
+# Rule deleted
+# Could not delete non-existent rule (v6)
+
+sudo ufw status
+# Status: active
+#
+# To                         Action      From
+# --                         ------      ----
+# 4242/tcp                   ALLOW       Anywhere                   # SSH service
+# 80                         ALLOW       Anywhere
+# 4242/tcp (v6)              ALLOW       Anywhere (v6)              # SSH service
+# 80 (v6)                    ALLOW       Anywhere (v6)
 ```
 
 ## Check that the SSH service is properly installed
 
 ```bash
-dpkg -l | grep openssh-server
+dpkg -l openssh-server
+# Desired=Unknown/Install/Remove/Purge/Hold
+# | Status=Not/Inst/Conf-files/Unpacked/halF-conf/Half-inst/trig-aWait/Trig-pend
+# |/ Err?=(none)/Reinst-required (Status,Err: uppercase=bad)
+# ||/ Name           Version           Architecture Description
+# +++-==============-=================-============-==========================================>
+# ii  openssh-server 1:9.2p1-2+deb12u6 amd64        secure shell (SSH) server, for secure acce>
 ```
 
 ### Check that it is working properly
 
 ```bash
-sudo service ssh status
+systemctl status  ssh
+# ● ssh.service - OpenBSD Secure Shell server
+#      Loaded: loaded (/lib/systemd/system/ssh.service; enabled; preset: enabled)
+#      Active: active (running) since Thu 2025-06-26 16:18:13 CEST; 17min ago
+#        Docs: man:sshd(8)
+#              man:sshd_config(5)
+#     Process: 701 ExecStartPre=/usr/sbin/sshd -t (code=exited, status=0/SUCCESS)
+#    Main PID: 715 (sshd)
+#       Tasks: 1 (limit: 2296)
+#      Memory: 8.3M
+#         CPU: 55ms
+#      CGroup: /system.slice/ssh.service
+#              └─715 "sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups"
 ```
 
 ### Explain what SSH is and the value of using it
@@ -667,24 +718,56 @@ SSH provides password or public-key based authentication and encrypts connection
 
 ```bash
 sudo service ssh status | grep listening
-# or check configs
+# Jun 26 16:18:13 anemet42 sshd[715]: Server listening on 0.0.0.0 port 4242.
+# Jun 26 16:18:13 anemet42 sshd[715]: Server listening on :: port 4242.
+
+# or check sshd_config
 sudo vim /etc/ssh/sshd_config
-# sudo vim /etc/ssh/ssh_config
 ```
 
 ### Login with SSH from host machine
 
 ```bash
-ssh anemet@127.0.0.1 -p 4242 # or
-ssh anemet@0.0.0.0 -p 4242 # or
-ssh anemet@localhost -p 4242
+ssh -p 4242 anemet@127.0.0.1   # or
+ssh -p 4242 anemet@0.0.0.0     # or
+ssh -p 4242 anemet@localhost
+# anemet@localhost's password:
+#
+# Linux anemet42 6.1.0-37-amd64 #1 SMP PREEMPT_DYNAMIC Debian 6.1.140-1 (2025-05-22) x86_64
+#
+# # Nr CPU sockets : 1
+# # Phys CPU cores : 2
+# # Virt CPU cores : 2
+# # RAM Usage      : 470/1967 MB (23.9%)
+# # Disk Usage     : 2323/30887 GB (7.5%)
+# # CPU Load       : 0.81%
+# # Last Boot      : 2025-06-26 16:17:59
+# # LVM Active     : yes
+# # TCP Conns      : 3 ESTABLISHED
+# # Users Logged   : 1
+# # IP / MAC       : 10.0.2.15  (08:00:27:c5:54:9a)
+# # sudo Commands  : 469
+# # TimeStamp      : Thu Jun 26 16:41:11 CEST 2025
+#
+# The programs included with the Debian GNU/Linux system are free software;
+# the exact distribution terms for each program are described in the
+# individual files in /usr/share/doc/*/copyright.
+#
+# Debian GNU/Linux comes with ABSOLUTELY NO WARRANTY, to the extent
+# permitted by applicable law.
+# Last login: Thu Jun 26 16:18:49 2025 from 10.0.2.2
 ```
 
 ### Make sure you cannot SSH login with root user
 
 ```bash
-anemet@anemet42:~$ login root
-login: Cannot possibly work without effective root
+ssh -p 4242 root@localhost
+# root@localhost's password:
+# Permission denied, please try again.
+# root@localhost's password:
+# Permission denied, please try again.
+# root@localhost's password:
+# root@localhost: Permission denied (publickey,password).
 ```
 
 ## Explanation of the monitoring script by showing the code
@@ -692,24 +775,81 @@ login: Cannot possibly work without effective root
 ### architecture
 
 ```bash
-architecture=$(uname -a)
+uname -snrvm
+# Linux anemet42 6.1.0-37-amd64 #1 SMP PREEMPT_DYNAMIC Debian 6.1.140-1 (2025-05-22) x86_64
 ```
+- -s, --kernel-name `Linux`
+- -n, --nodename `anemet42`
+- -r, --kernel-release `6.1.0-37-amd64`
+- -v, --kernel-version `#1 SMP PREEMPT_DYNAMIC Debian 6.1.140-1 (2025-05-22)`
+- -m, --machine `x86_64`
 
 uname (short for unix name) is a computer program in Unix and Unix-like computer operating systems that prints the name, version and other details about the current machine and the operating system running on it.
 
-### physical_cpu
-
-[https://www.cyberciti.biz/faq/check-how-many-cpus-are-there-in-linux-system/](https://www.cyberciti.biz/faq/check-how-many-cpus-are-there-in-linux-system/)
+### physical CPU sockets, physical CPU cores
 
 ```bash
-physical_cpu=$(grep "physical id" /proc/cpuinfo | sort | uniq | wc -l)
-# or
-lscpu | grep "CPU(s)"
+man lscpu
+# LSCPU(1)                               User Commands                              LSCPU(1)
+#
+# NAME
+#        lscpu - display information about the CPU architecture
+#
+# SYNOPSIS
+#        lscpu [options]
+#
+# DESCRIPTION
+#        lscpu gathers CPU architecture information from sysfs, /proc/cpuinfo and any
+#        applicable architecture-specific libraries (e.g. librtas on Powerpc). The command
+#
+#        -b, --online
+#            Limit the output to online CPUs (default for -p). This option may only be
+#            specified together with option -e or -p.
+#
+#        -p, --parse[=list]
+#            Optimize the command output for easy parsing.
+#            When specifying the list argument, the string of option, equal sign (=), and
+#            list must not contain any blanks or other whitespace. Examples: '-p=cpu,node'
+#            or '--parse=cpu,node'.
+#            The default list of columns may be extended if list is specified in the format
+#            +list (e.g., lscpu -p=+MHZ).
+```
+
+```bash
+# getting nr_socket:
+lscpu | grep -i "Socket(s):"
+# Socket(s):                               1
+
+# script command
+nr_sockets=$(lscpu | grep -i "Socket(s):" | awk '{print $NF}')
+```
+
+```bash
+# getting nr physical core:
+lscpu -b -p=Core,Socket | grep -v "^#"
+# 0,0
+# 1,0
+
+# script command
+physical_cores=$(lscpu -b -p=Core,Socket | grep -v '^#' | sort -u | wc -l)
+```
+
+
+### virtual_cpu
+
+```bash
+man proc
+#         ...
+#        /proc/cpuinfo
+#               This is a collection of CPU and system  architecture  dependent  items,  for
+#               each  supported  architecture a different list.  Two common entries are pro‐
+#               cessor which gives CPU number and bogomips; a system constant that is calcu‐
+#               lated  during kernel initialization.  SMP machines have information for each
+#               CPU.  The lscpu(1) command gathers its information from this file.
+#         ...
 ```
 
 Use `/proc/cpuinfo` file that lists CPUs.
-
-### virtual_cpu
 
 [https://webhostinggeeks.com/howto/how-to-display-the-number-of-processors-vcpu-on-linux-vps/](https://webhostinggeeks.com/howto/how-to-display-the-number-of-processors-vcpu-on-linux-vps/)
 
@@ -718,10 +858,14 @@ If your processors are multi-core, you need to know how many virtual processors 
 [https://www.networkworld.com/article/2715970/counting-processors-on-your-linux-box.html](https://www.networkworld.com/article/2715970/counting-processors-on-your-linux-box.html)
 
 ```bash
-virtual_cpu=$(grep -c ^processor /proc/cpuinfo)
-```
+# getting nr virtual CPU:
+grep  ^processor /proc/cpuinfo
+# processor	: 0
+# processor	: 1
 
-`-c` flag is a count on the `grep`
+# script command
+virt_cpu=$(grep -c ^processor /proc/cpuinfo)
+```
 
 ### memory_usage
 
@@ -730,60 +874,90 @@ virtual_cpu=$(grep -c ^processor /proc/cpuinfo)
 [https://linuxcommando.blogspot.com/2008/04/using-awk-to-extract-lines-in-text-file.html](https://linuxcommando.blogspot.com/2008/04/using-awk-to-extract-lines-in-text-file.html)
 
 ```bash
-memory_usage=$(free -m | awk 'NR==2{printf "%s/%sMB (%.2f%%)\n", $3,$2,$3*100/$2 }')
-```
+man free
 
-### total_disk
+#        free - Display amount of free and used memory in the system
+#
+#        -m, --mebi
+#               Display the amount of memory in mebibytes.
+```
 
 ```bash
-total_disk=$(df -Bg | grep '^/dev/' | grep -v '/boot$' | awk '{ft += $2} END {print ft}')
+free -m
+#                total        used        free      shared  buff/cache   available
+# Mem:            1967         255        1506           0         348        1711
+# Swap:           2191           0        2191
+
+# script command
+read total_mem used_mem <<<$(free -m | awk '/Mem:/ {print $2, $3}')
+mem_pct=$(awk "BEGIN {printf \"%.1f\", $used_mem/$total_mem*100}")
 ```
-
-`df` disk utility, `-Bg` displays in Gigabytes.
-
-`ft` is a variable name, `END` stops the command from reaching the print until it has gone through all the lines.
-
-Add-up total.
-
-`-v` flag on `grep` returns non-matching lines.
-
-### used_disk
 
 ```bash
-used_disk=$(df -Bm | grep '^/dev/' | grep -v '/boot$' | awk '{ut += $3} END {print ut}')
+df -BM --total
+# Filesystem                    1M-blocks  Used Available Use% Mounted on
+# udev                               957M    0M      957M   0% /dev
+# tmpfs                              197M    1M      197M   1% /run
+# /dev/mapper/LVMGroup-root         9287M 1384M     7410M  16% /
+# tmpfs                              984M    0M      984M   0% /dev/shm
+# tmpfs                                5M    0M        5M   0% /run/lock
+# /dev/mapper/LVMGroup-home         4611M    1M     4357M   1% /home
+# /dev/sda1                          436M  118M      291M  29% /boot
+# /dev/mapper/LVMGroup-srv          2743M    1M     2584M   1% /srv
+# /dev/mapper/LVMGroup-tmp          2743M    1M     2584M   1% /tmp
+# /dev/mapper/LVMGroup-var          2743M  237M     2348M  10% /var
+# /dev/mapper/LVMGroup-var--log     5987M   51M     5612M   1% /var/log
+# tmpfs                              197M    0M      197M   0% /run/user/1000
+# total                            30887M 1790M    27521M   7% -
+
+# script command
+read total_disk used_disk <<<$(df -BM --total | awk '/total/ {print substr($2,1,length($2)-1), substr($3,1,length($3)-1)}')
+disk_pct=$(awk "BEGIN {printf \"%.1f\", $used_disk/$total_disk*100}")
 ```
 
-`-Bm` displays in Megabytes.
-
-Add-up used.
-
-### percent_used_disk
-
-```bash
-percent_used_disk=$(df -Bm | grep '^/dev/' | grep -v '/boot$' | awk '{ut += $3} {ft+= $2} END {printf("%d"), ut/ft*100}')
-```
-
-Need to do the same as before but both in the same measuring unit to get a meaningful percentage.
 
 ### cpu_load
 
 ```bash
-cpu_load=$(top -bn1 | grep load | awk '{printf "%.2f%%\n", $(NF-2)}')
+# install `sysstat`
+sudo apt install sysstat
 ```
 
-[`top` utility](https://man7.org/linux/man-pages/man1/top.1.html)
+```bash
+man mpstat
+       mpstat - Report processors related statistics.
+```
 
-`-b` flag for batch mode, allows to pipe output to file or another command.
-`-n1` flag for 1 interation.
-`NF` number of fields in the record (row), `$(NF-2)` selects the thrid counting from the last.
+```bash
+mpstat
+# Linux 6.1.0-37-amd64 (anemet42) 	06/23/2025 	_x86_64_	(2 CPU)
+#
+# 05:14:10 PM  CPU    %usr   %nice    %sys %iowait    %irq   %soft  %steal  %guest  %gnice   %idle
+# 05:14:10 PM  all    0.01    0.00    0.06    1.83    0.00    0.09    0.00    0.00    0.00   98.00
+
+# script command
+cpu_pct=$(mpstat | grep "all" | awk '{print 100 - $NF}')
+```
 
 ### last_boot
 
 ```bash
-last_boot=$(who -b | awk '$1 == "system" {print $3 " " $4}')
+uptime -s
+# 2025-06-25 18:56:06
+```
+```bash
+man uptime
+
+#        uptime - Tell how long the system has been running.
+#
+#        -s, --since
+#              system up since, in yyyy-mm-dd HH:MM:SS format
 ```
 
-`who -b` shows time of last system boot.
+```bash
+# script command
+last_boot=$(uptime -s)
+```
 
 ### lvm_partitions
 

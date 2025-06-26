@@ -480,7 +480,7 @@ uname -snrvm
 - -v, --kernel-version `#1 SMP PREEMPT_DYNAMIC Debian 6.1.140-1 (2025-05-22)`
 - -m, --machine `x86_64`
 
-#### 6.1.2 The number of CPU sockets, CPU cores, virtual CPUs
+#### 6.1.2 The number physical CPU sockets, CPU cores
 
 ```bash
 # getting nr_socket:
@@ -501,6 +501,8 @@ lscpu -b -p=Core,Socket | grep -v "^#"
 physical_cores=$(lscpu -b -p=Core,Socket | grep -v '^#' | sort -u | wc -l)
 ```
 
+#### 6.1.4 The number of virtual CPU(s)
+
 ```bash
 # getting nr virtual CPU:
 grep  ^processor /proc/cpuinfo
@@ -511,7 +513,7 @@ grep  ^processor /proc/cpuinfo
 virt_cpu=$(grep -c ^processor /proc/cpuinfo)
 ```
 
-#### 6.1.3 Memory availability and utilization
+#### 6.1.5 Memory availability and utilization
 
 ```bash
 free -m
@@ -524,7 +526,8 @@ read total_mem used_mem <<<$(free -m | awk '/Mem:/ {print $2, $3}')
 mem_pct=$(awk "BEGIN {printf \"%.1f\", $used_mem/$total_mem*100}")
 ```
 
-#### 6.1.4 Available storage and utilization
+#### 6.1.6 Available storage and utilization
+
 
 ```bash
 df -BM --total
@@ -548,7 +551,7 @@ read total_disk used_disk <<<$(df -BM --total | awk '/total/ {print substr($2,1,
 disk_pct=$(awk "BEGIN {printf \"%.1f\", $used_disk/$total_disk*100}")
 ```
 
-#### 6.1.5 CPU utilization rate
+#### 6.1.7 CPU utilization rate
 
 ```bash
 # install `sysstat`
@@ -564,7 +567,7 @@ mpstat
 cpu_pct=$(mpstat | grep "all" | awk '{print 100 - $NF}')
 ```
 
-#### 6.1.6 Last boot
+#### 6.1.8 Last boot
 
 ```bash
 uptime -s
@@ -574,7 +577,7 @@ uptime -s
 last_boot=$(uptime -s)
 ```
 
-#### 6.1.7 LVM active
+#### 6.1.9 LVM active
 
 ```bash
 lsblk
@@ -597,7 +600,7 @@ lsblk
 lvm_active=$(lsblk | grep -q " lvm " && echo "yes" || echo "no")
 ```
 
-#### 6.1.8 Number of active connections
+#### 6.1.10 Number of active connections
 
 ```bash
 ss -ta
@@ -610,7 +613,7 @@ ss -ta
 tcp_conn=$(ss -ta | grep ESTAB | wc -l)
 ```
 
-#### 6.1.9 Number of users logged in the server
+#### 6.1.11 Number of users logged in the server
 
 ```bash
 who
@@ -621,7 +624,7 @@ who
 logged_users=$(who | wc -l)
 ```
 
-#### 6.1.10 IP address
+#### 6.1.12 IP address
 
 ```bash
 hostname -I
@@ -631,7 +634,7 @@ hostname -I
 ip_addr=$(hostname -I | awk '{print $1}')
 ```
 
-#### 6.1.11 MAC address
+#### 6.1.13 MAC address
 
 ```bash
 ip link show
@@ -644,7 +647,7 @@ ip link show
 mac_addr=$(ip link show | awk '/link\/ether/ {print $2; exit}')
 ```
 
-#### 6.1.12 Number of commands executed with `sudo`
+#### 6.1.14 Number of commands executed with `sudo`
 
 
 ```bash
@@ -665,7 +668,7 @@ sudo_runs=$(journalctl -q _COMM=sudo | grep "COMMAND=" | wc -l)
 ```
 
 
-#### 6.1.13 Printing out the collected results
+#### 6.1.15 Printing out the collected results
 
 ```bash
 datetime=$(date)
@@ -696,11 +699,12 @@ wall -n "$msg"
 
 ```
 
-#### 6.1.14 Assembling the script `monitoring.sh`
+#### 6.1.16 Assembling the script `monitoring.sh`
 
 Here is the assembled result of the script: [monitoring.sh](./monitoring.sh)
 
-### 6.x Crontab
+
+### 6.2 Crontab
 
 Copy the content of [monitoring.sh](./monitoring.sh) into a file in the home directory.
 
