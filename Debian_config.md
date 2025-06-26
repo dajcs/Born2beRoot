@@ -154,6 +154,13 @@ Alternatively the Virtualbox GUI setting can be replaced by the command line bel
 VBoxManage modifyvm "Born2beRoot" --natpf1 "ssh,tcp,,2222,10.0.2.15,4242"
 ```
 
+You can add another redirecting port 2223, and this will allow to ssh into VM simultaneously from 2 different terminals on your host (to execute special tests or just to play around):
+
+```bash
+# this command should be entered on the Ubuntu host
+VBoxManage modifyvm "Born2beRoot" --natpf1 "ssh,tcp,,2223,10.0.2.15,4242"
+```
+
 
     - Start your Debian VM.
 - **How to Connect from Ubuntu**:  \
@@ -236,7 +243,7 @@ sudo chown root:root /var/log/sudo
 
 ### 4.2 `visudo`
 
-The `sudo` configuration is stored in the file `/etc/sudoers.d/sudoconfig`. This file should not be edited directly, edit **only** though command `visudo`:
+The `sudo` configuration is stored in the file `/etc/sudoers.d/sudoconfig`. This file should not be edited directly, edit **only** through command `visudo`:
 
 ```bash
 sudo visudo
@@ -799,9 +806,9 @@ total 8
 ```bash
 ssh anemet@localhost -p 4242
 # anemet@localhost's password:
-# 
+#
 # Linux anemet42 6.1.0-37-amd64 #1 SMP PREEMPT_DYNAMIC Debian 6.1.140-1 (2025-05-22) x86_64
-# 
+#
 # # Nr CPU sockets : 1
 # # Phys CPU cores : 2
 # # Virt CPU cores : 2
@@ -815,11 +822,11 @@ ssh anemet@localhost -p 4242
 # # IP / MAC       : 10.0.2.15  (08:00:27:c5:54:9a)
 # # sudo Commands  : 408
 # # TimeStamp      : Wed Jun 25 23:52:00 CEST 2025
-# 
+#
 # The programs included with the Debian GNU/Linux system are free software;
 # the exact distribution terms for each program are described in the
 # individual files in /usr/share/doc/*/copyright.
-# 
+#
 # Debian GNU/Linux comes with ABSOLUTELY NO WARRANTY, to the extent
 # permitted by applicable law.
 # Last login: Wed Jun 25 23:51:40 2025 from 172.28.161.182

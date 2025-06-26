@@ -102,7 +102,7 @@ Imagine **dpkg** as the foundation of a house, responsible for the structural
 
 **SELinux** is more complex and difficult to learn, configure, manage and troubleshoot because of labels, security contexts, policies, and modes. **AppArmor**, on the other hand, is simpler and more intuitive due to profiles that are easier to create, modify, and debug.
 
-Run ```aa-status``` to check if **AppArmor** is running.
+Run `aa-status` to check if **AppArmor** is running.
 
 
 
@@ -137,18 +137,39 @@ Profiles can allow capabilities like network access, raw socket access, and the 
 
 ```bash
 sudo ufw status
+# Status: active
+#
+# To                         Action      From
+# --                         ------      ----
+# 4242/tcp                   ALLOW       Anywhere                   # SSH service
+# 80                         ALLOW       Anywhere
+# 4242/tcp (v6)              ALLOW       Anywhere (v6)              # SSH service
+# 80 (v6)                    ALLOW       Anywhere (v6)
 ```
 
 ### Check that the SSH service is started
 
 ```bash
-sudo service ssh status
+systemctl status ssh
+# ● ssh.service - OpenBSD Secure Shell server
+#      Loaded: loaded (/lib/systemd/system/ssh.service; enabled; preset: enabled)
+#      Active: active (running) since Thu 2025-06-26 09:00:56 CEST; 1h 12min ago
+#        Docs: man:sshd(8)
+#              man:sshd_config(5)
+#     Process: 685 ExecStartPre=/usr/sbin/sshd -t (code=exited, status=0/SUCCESS)
+#    Main PID: 693 (sshd)
+#       Tasks: 1 (limit: 2296)
+#      Memory: 11.1M
+#         CPU: 119ms
+#      CGroup: /system.slice/ssh.service
+#              └─693 "sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups"
 ```
 
 ### Check that the operating system is Debian
 
 ```bash
 cat /etc/os-release | grep PRETTY
+# PRETTY_NAME="Debian GNU/Linux 12 (bookworm)"
 ```
 
 ## User
@@ -158,6 +179,7 @@ cat /etc/os-release | grep PRETTY
 
 ```bash
 groups anemet
+# anemet : anemet cdrom floppy sudo audio dip video plugdev users netdev user42
 ```
 
 ### Check password policy rules
@@ -165,9 +187,12 @@ groups anemet
 Password expiry: line ~164
 
 ```bash
-vim /etc/login.defs
+cat /etc/login.defs | grep "^PASS_"
+# PASS_MAX_DAYS	30
+# PASS_MIN_DAYS	2
+# PASS_WARN_AGE	7
 ```
-```
+```bash
 PASS_MAX_DAYS   30   # expire after 30 days
 PASS_MIN_DAYS    2   # must wait 2 days before changing again
 PASS_WARN_AGE    7   # 7-day heads-up e-mail + login banner
@@ -176,9 +201,17 @@ PASS_WARN_AGE    7   # 7-day heads-up e-mail + login banner
 Password policy: line 25.
 
 ```bash
-vim /etc/security/pwquality.conf
+cat /etc/security/pwquality.conf | egrep "difok|minlen|dcredit|ucredit|lcredit|maxrepeat|usercheck =|enforce_for_root"
+# difok = 7
+# minlen = 10
+# dcredit = -1
+# ucredit = -1
+# lcredit = -1
+# maxrepeat = 3
+# usercheck = 1
+# enforce_for_root
 ```
-```
+```bash
 difok           = 7         # ≥7 chars different from previous
 minlen          = 10        # ≥10 chars
 dcredit         = -1        # at least 1 digit
@@ -189,15 +222,52 @@ usercheck       = 1         # forbid name inside password
 enforce_for_root            # root must obey (except difok)
 ```
 
-### Create a new user
+### Create a new user & confirm password policy
 
 ```bash
 sudo adduser demo
+# try several week passwords: demo, demo1, Demo1:
+# ----------------------------------------------
+# Adding user `demo' ...
+# Adding new group `demo' (1002) ...
+# Adding new user `demo' (1002) with group `demo (1002)' ...
+# Creating home directory `/home/demo' ...
+# Copying files from `/etc/skel' ...
+# New password:
+demo
+# BAD PASSWORD: The password contains less than 1 digits
+# New password:
+demo1
+# BAD PASSWORD: The password contains less than 1 uppercase letters
+# New password:
+Demo1
+# BAD PASSWORD: The password is shorter than 10 characters
+# passwd: Have exhausted maximum number of retries for service
+# passwd: password unchanged
+# Try again? [y/N]
+y
+# some more passwords: Demo1Demo1111, Demo1Demo111, Test1Test111
+# New password:
+Demo1Demo1111
+# BAD PASSWORD: The password contains more than 3 same characters consecutively
+# New password:
+Demo1Demo111
+# BAD PASSWORD: The password contains the user name in some form
+# New password:
+Test1Test111
+# Retype new password:
+# passwd: password updated successfully
+# Changing the user information for demo
+# Enter the new value, or press ENTER for the default
+# 	Full Name []: Demo
+# 	Room Number []:
+# 	Work Phone []:
+# 	Home Phone []:
+# 	Other []:
+# Is the information correct? [Y/n]
+# Adding new user `demo' to supplemental / extra groups `users' ...
+# Adding user `demo' to group `users' ...
 ```
-
-### Assign password
-
-Confirm it follows the password policy
 
 ### Explain how password rules were setup
 
@@ -209,13 +279,19 @@ vim /etc/security/pwquality.conf
 
 ```bash
 sudo addgroup evaluating
+# Adding group `evaluating' (GID 1003) ...
+# Done.
+
 sudo adduser demo evaluating
+# Adding user `demo' to group `evaluating' ...
+# Done.
 ```
 
 ### Check that user belongs to new group
 
 ```bash
 groups demo
+# demo : demo users evaluating
 ```
 
 ## Explain advantages of password policy and advantages and disadvantages of policy implementation
@@ -230,22 +306,41 @@ How much better is a 15 character password than a 30 character password if hacke
 
 ```bash
 uname -n
-# or
+# anemet42
+
 hostname
+# anemet42
 ```
 
-## Modify hostname with evaluator login and reboot to confirm change
+## Modify hostname with evaluator login (`demo`) and reboot to confirm change
 
 ```bash
 sudo adduser demo sudo
-sudo login demo
-sudo vim /etc/hostname # change to demo42
+# Adding user `demo' to group `sudo' ...
+# Done.
+
+su - demo
+# Password:
+# demo@anemet42:~$
+
+sudo vim /etc/hostname
+# change anemet42 -> demo42
+# save
+
 sudo reboot
+
+# Broadcast message from root@anemet42 on pts/2 (Thu 2025-06-26 10:48:08 CEST):
+
+# The system will reboot now!
+
 ```
 
 ### Restore original hostname
 
 ```bash
+# after reboot
+# demo42 login:
+
 sudo vim /etc/hostname # change to anemet42
 sudo reboot
 ```
@@ -254,24 +349,38 @@ sudo reboot
 
 ```bash
 lsblk
+# NAME                    MAJ:MIN RM  SIZE RO TYPE  MOUNTPOINTS
+# sda                       8:0    0   31G  0 disk
+# ├─sda1                    8:1    0  476M  0 part  /boot
+# ├─sda2                    8:2    0    1K  0 part
+# └─sda5                    8:5    0 30.5G  0 part
+#   └─sda5_crypt          254:0    0 30.5G  0 crypt
+#     ├─LVMGroup-root     254:1    0  9.3G  0 lvm   /
+#     ├─LVMGroup-swap     254:2    0  2.1G  0 lvm   [SWAP]
+#     ├─LVMGroup-home     254:3    0  4.7G  0 lvm   /home
+#     ├─LVMGroup-var      254:4    0  2.8G  0 lvm   /var
+#     ├─LVMGroup-srv      254:5    0  2.8G  0 lvm   /srv
+#     ├─LVMGroup-tmp      254:6    0  2.8G  0 lvm   /tmp
+#     └─LVMGroup-var--log 254:7    0    6G  0 lvm   /var/log
+# sr0                      11:0    1 1024M  0 rom
 ```
 
 ### Compare partition output with example in subject
 
 ```bash
-NAME                    MAJ:MIN RM  SIZE RO TYPE  MOUNTPOINT
-sda                       8:0    0    8G  0 disk
-|-sda1                    8:1    0  476M  0 part  /boot
-|-sda2                    8:2    0    1K  0 part
-`-sda5                    8:5    0  7.5G  0 part
-  `-sda5_crypt          254:0    0  7.5G  0 crypt
-    |-LVMGroup-root     254:1    0  1.9G  0 lvm   /
-    |-LVMGroup-swap     254:2    0  952M  0 lvm   [SWAP]
-    |-LVMGroup-home     254:3    0  952M  0 lvm   /home
-    |-LVMGroup-var      254:4    0  952M  0 lvm   /var
-    |-LVMGroup-srv      254:5    0  952M  0 lvm   /srv
-    |-LVMGroup-tmp      254:6    0  952M  0 lvm   /tmp
-    `-LVMGroup-var--log 254:7    0    1G  0 lvm   /var/log
+NAME                    MAJ:MIN RM  SIZE RO TYPE  MOUNTPOINTS
+sda                       8:0    0 30.8G  0 disk
+├─sda1                    8:1    0  500M  0 part  /boot
+├─sda2                    8:2    0    1K  0 part
+└─sda5                    8:5    0 30.3G  0 part
+  └─sda5_crypt          254:0    0 30.3G  0 crypt
+    ├─LVMGroup-root     254:1    0   10G  0 lvm   /
+    ├─LVMGroup-swap     254:2    0  2.3G  0 lvm   [SWAP]
+    ├─LVMGroup-home     254:3    0    5G  0 lvm   /home
+    ├─LVMGroup-var      254:4    0    3G  0 lvm   /var
+    ├─LVMGroup-srv      254:5    0    3G  0 lvm   /srv
+    ├─LVMGroup-tmp      254:6    0    3G  0 lvm   /tmp
+    └─LVMGroup-var--log 254:7    0    4G  0 lvm   /var/log
 sr0                      11:0    1 1024M  0 rom
 ```
 
@@ -288,13 +397,21 @@ Logical volume management (LVM) is a form of storage virtualization that offers 
 ## Check `sudo` program is properly installed
 
 ```bash
-dpkg -l | grep sudo
+dpkg -l sudo
+# Desired=Unknown/Install/Remove/Purge/Hold
+# | Status=Not/Inst/Conf-files/Unpacked/halF-conf/Half-inst/trig-aWait/Trig-pend
+# |/ Err?=(none)/Reinst-required (Status,Err: uppercase=bad)
+# ||/ Name           Version            Architecture Description
+# +++-==============-==================-============-======================================================# =
+# ii  sudo           1.9.13p3-1+deb12u1 amd64        Provide limited super user privileges to specific # users
+# ~
 ```
 
 ## Assign new user to `sudo` group
 
 ```bash
 sudo adduser demo sudo
+# adduser: The user `demo' is already a member of `sudo'.
 ```
 
 ## Explain value and operation of sudo using examples
@@ -304,11 +421,28 @@ Sudo stands for SuperUser DO and is used to access restricted files and operatio
 The sudo command temporarily elevates privileges allowing users to complete sensitive tasks without logging in as the root user.
 
 ```bash
-apt update # Error 13: Permission denied
+apt update
+# Reading package lists... Done
+# E: Could not open lock file /var/lib/apt/lists/lock - open (13: Permission denied)
+# E: Unable to lock directory /var/lib/apt/lists/
+# W: Problem unlinking the file /var/cache/apt/pkgcache.bin - RemoveCaches (13: Permission denied)
+# W: Problem unlinking the file /var/cache/apt/srcpkgcache.bin - RemoveCaches (13: Permission denied)
+
 sudo apt update
+# Hit:1 http://deb.debian.org/debian bookworm InRelease
+# Get:2 http://deb.debian.org/debian bookworm-updates InRelease [55.4 kB]
+# Get:3 http://security.debian.org/debian-security bookworm-security InRelease [48.0 kB]
+# Get:4 http://security.debian.org/debian-security bookworm-security/main Sources [140 kB]
+# Get:5 http://security.debian.org/debian-security bookworm-security/main amd64 Packages [269 kB]
+# Get:6 http://security.debian.org/debian-security bookworm-security/main Translation-en [161 kB]
+# Fetched 673 kB in 0s (2,739 kB/s)
+# Reading package lists... Done
+# Building dependency tree... Done
+# Reading state information... Done
+# 1 package can be upgraded. Run 'apt list --upgradable' to see it.
 ```
 
-[Read more](https://phoenixnap.com/kb/linux-sudo-command)
+[https://phoenixnap.com/kb/linux-sudo-command](https://phoenixnap.com/kb/linux-sudo-command)
 
 ## Show the implementation of the subject rules
 
@@ -366,33 +500,84 @@ Defaults        secure_path="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/
 ## Verify that the `/var/log/sudo/` folder exists and has a file
 
 ```bash
-sudo ls /var/log/sudo/
-```
+sudo ls -l /var/log/sudo
+# total 24
+# drwx------ 283 root root 20480 Jun 26 11:10 anemet
+# drwx------   4 root root  4096 Jun 26 10:48 demo
 
-Has file `seq`.
+sudo ls -l /var/log/sudo/demo
+# total 8
+# drwx------ 2 root root 4096 Jun 26 10:47 20250626-104706-vim
+# drwx------ 2 root root 4096 Jun 26 10:48 20250626-104808-reboot
+
+sudo ls -l /var/log/sudo/demo/20250626-104706-vim
+# total 32
+# -rw------- 1 root root   77 Jun 26 10:47 log
+# -rw------- 1 root root 2603 Jun 26 10:47 log.json
+# -rw------- 1 root root   25 Jun 26 10:47 stderr
+# -rw------- 1 root root   25 Jun 26 10:47 stdin
+# -rw------- 1 root root   25 Jun 26 10:47 stdout
+# -r-------- 1 root root  365 Jun 26 10:47 timing
+# -rw------- 1 root root  129 Jun 26 10:47 ttyin
+# -rw------- 1 root root  611 Jun 26 10:47 ttyout
+```
 
 ### Check contents of files in this folder
 
 ```bash
 sudo apt update
-sudo ls -lrt /var/log/sudo/anemet
 
-# run sudo replay
-sudo sudoreplay /var/log/sudo/anemet/ls...
-sudo sudoreplay /var/log/sudo/anemet/apt...
+sudo ls -l /var/log/sudo/anemet | tail
+# drwx------ 2 root root 4096 Jun 26 11:02 20250626-110238-adduser
+# drwx------ 2 root root 4096 Jun 26 11:02 20250626-110240-adduser
+# drwx------ 2 root root 4096 Jun 26 11:05 20250626-110552-apt
+# drwx------ 2 root root 4096 Jun 26 11:06 20250626-110607-apt
+# drwx------ 2 root root 4096 Jun 26 11:10 20250626-111018-ls
+# drwx------ 2 root root 4096 Jun 26 11:10 20250626-111030-ls
+# drwx------ 2 root root 4096 Jun 26 11:12 20250626-111216-ls
+# drwx------ 2 root root 4096 Jun 26 11:13 20250626-111359-apt
+# drwx------ 2 root root 4096 Jun 26 11:14 20250626-111428-ls
+
+# play with sudo replay
+sudo sudoreplay /var/log/sudo/anemet/20250626-111359-apt
+# Replaying sudo session: /usr/bin/apt update
+# Hit:1 http://deb.debian.org/debian bookworm InRelease
+# Hit:2 http://deb.debian.org/debian bookworm-updates InRelease
+# Hit:3 http://security.debian.org/debian-security bookworm-security InRelease
+# Reading package lists... Done
+# Building dependency tree... Done
+# Reading state information... Done
+# 1 package can be upgraded. Run 'apt list --upgradable' to see it.
+
 ```
 
 
 ## Check that UFW is properly installed
 
 ```bash
-dpkg -l | grep ufw
+dpkg -l ufw
+# Desired=Unknown/Install/Remove/Purge/Hold
+# | Status=Not/Inst/Conf-files/Unpacked/halF-conf/Half-inst/trig-aWait/Trig-pend
+# |/ Err?=(none)/Reinst-required (Status,Err: uppercase=bad)
+# ||/ Name           Version      Architecture Description
+# +++-==============-============-============-=========================================
+# ii  ufw            0.36.2-1     all          program for managing a Netfilter firewall
+#
 ```
 
 ### Check that it is working properly
 
 ```bash
 sudo ufw status
+# Status: active
+#
+# To                         Action      From
+# --                         ------      ----
+# 4242/tcp                   ALLOW       Anywhere                   # SSH service
+# 80                         ALLOW       Anywhere
+# 4242/tcp (v6)              ALLOW       Anywhere (v6)              # SSH service
+# 80 (v6)                    ALLOW       Anywhere (v6)
+#
 ```
 
 ### Explain what UFW is and the value of using it
@@ -407,13 +592,31 @@ UFW aims to provide an easy to use interface for people unfamiliar with firewall
 
 ```bash
 sudo ufw status | grep 4242
+# 4242/tcp                   ALLOW       Anywhere                   # SSH service
+# 242/tcp (v6)              ALLOW       Anywhere (v6)              # SSH service
 ```
 
 ### Add a new rule for port 8080
 
 ```bash
 sudo ufw allow 8080
-sudo ufw status
+# Rule added
+# Rule added (v6)
+
+sudo ufw status verbose
+# Status: active
+# Logging: on (low)
+# Default: deny (incoming), allow (outgoing), disabled (routed)
+# New profiles: skip
+#
+# To                         Action      From
+# --                         ------      ----
+# 4242/tcp                   ALLOW IN    Anywhere                   # SSH service
+# 80                         ALLOW IN    Anywhere
+# 8080                       ALLOW IN    Anywhere
+# 4242/tcp (v6)              ALLOW IN    Anywhere (v6)              # SSH service
+# 80 (v6)                    ALLOW IN    Anywhere (v6)
+# 8080 (v6)                  ALLOW IN    Anywhere (v6)
 ```
 
 ### Delete the new rule
@@ -422,6 +625,16 @@ List rules numbered
 
 ```bash
 sudo ufw status numbered
+# Status: active
+#
+#      To                         Action      From
+#      --                         ------      ----
+# [ 1] 4242/tcp                   ALLOW IN    Anywhere                   # SSH service
+# [ 2] 80                         ALLOW IN    Anywhere
+# [ 3] 8080                       ALLOW IN    Anywhere
+# [ 4] 4242/tcp (v6)              ALLOW IN    Anywhere (v6)              # SSH service
+# [ 5] 80 (v6)                    ALLOW IN    Anywhere (v6)
+# [ 6] 8080 (v6)                  ALLOW IN    Anywhere (v6)
 ```
 
 Delete rule
