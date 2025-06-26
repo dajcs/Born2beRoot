@@ -121,7 +121,7 @@ Run the virtual machine and follow the OS install wizard.
     `Finish` \
     <BR>
 
-- Select every partition and configure **Use as** and **Mount point** accoring to the table below:
+- Select every partition and configure **Use as** and **Mount point** according to the table below:
 
 12. | Select | Use as: | Mount point: | Done setting up the partition |
     | --- | --- | --- | --- |

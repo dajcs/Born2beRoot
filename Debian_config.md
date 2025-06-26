@@ -32,7 +32,7 @@ sudo -v                     # should ask for your password, then succeed
 ```
 `sudoers` is already set up so anyone in the sudo group gains full sudo access; no manual editing needed.
 
-Since we are working with groups, the project asks us to create group `user42` and add the login user to it:
+Since we are working with groups and the project asks us to create group `user42` and add the login user to it:
 
 ```bash
 sudo addgroup user42
@@ -52,7 +52,8 @@ getent group sudo
 
 ```bash
 sudo apt install vim
-echo "set number" ~/.vimrc  # to display line number by default
+echo "set number" > ~/.vimrc          # to display line number by default
+sudo echo "set number" > /root/.vimrc      # to display line number when editing as root
 ```
 
 
