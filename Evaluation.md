@@ -57,18 +57,17 @@ VMs may be deployed to accommodate different levels of processing power needs, t
 
 Hypervisors are of two types, the **first one** being the **bare-metal** hypervisors, they don’t need to load an underlying OS that exists on the host machine, but instead have direct contact with the hardware through their own integrated kernel. Microsoft designates **Hyper-V** as a Type 1 hypervisor. Hyper-V installs on Windows but runs directly on the physical hardware, inserting itself underneath the host OS. All guest operating systems then run through the hypervisor, but the host operating system gets special access to the hardware, giving it a performance advantage.
 
-**The second** type are the hosted hyper-vs, they need the host machine kernel’s (OS) to establish the connection between the hardware and the VM. A Type 2 hypervisor doesn’t run directly on the underlying hardware. Instead, it runs as an application in an OS (**VirtualBox**, **VMware Fusion**). Type 2 hypervisors rarely show up in server-based environments. Instead, they’re suitable for individual PC users needing to run multiple operating systems.
+**The second** type are the **hosted hyper-vs**, they need the host machine kernel’s (OS) to establish the connection between the hardware and the VM. A Type 2 hypervisor doesn’t run directly on the underlying hardware. Instead, it runs as an application in an OS (**VirtualBox**, **VMware Fusion**). Type 2 hypervisors rarely show up in server-based environments. Instead, they’re suitable for individual PC users needing to run multiple operating systems.
 
 **Type 1 or type 2 ?**
 
-A Type 2 hypervisor may function **slower** than a Type 1, as all of its commands must be filtered through the host computer’s operating system, creating a lag time which makes hyper-v of type 1 more **efficient**. It also introduces potential security risks if an attacker compromises the host OS because they could then manipulate any guest OS running in the Type 2 hypervisor.
+A **Type 2 hypervisor** may function **slower** than a Type 1, as all of its commands must be filtered through the host computer’s operating system, creating a lag time which makes hyper-v of **type 1** more **efficient**. It also introduces potential security risks if an attacker compromises the host OS because they could then manipulate any guest OS running in the Type 2 hypervisor.
 
 
 
 ### The difference between `aptitude` and `apt`
 
-Aptitude is a higher-level package manager while APT is lower-level package manager which can be used by other
-higher-level package managers.
+**Aptitude** is a **higher-level package manager** while **apt** is **lower-level** package manager which can be used by other higher-level package managers.
 
 Aptitude has more functionality than **apt-get** and integrates functionalities of **apt-get** and its other variants including **apt-mark** and **apt-cache**.
 
@@ -912,6 +911,19 @@ read total_mem used_mem <<<$(free -m | awk '/Mem:/ {print $2, $3}')
 mem_pct=$(awk "BEGIN {printf \"%.1f\", $used_mem/$total_mem*100}")
 ```
 
+### disk storage
+
+```bash
+man df
+# NAME
+#        df - report file system space usage
+
+#        -B, --block-size=SIZE
+#               scale  sizes by SIZE before printing them; e.g., '-BM' prints sizes in units of 1,048,576
+#               bytes; see SIZE format below
+```
+
+
 ```bash
 df -BM --total
 # Filesystem                    1M-blocks  Used Available Use% Mounted on
@@ -928,7 +940,9 @@ df -BM --total
 # /dev/mapper/LVMGroup-var--log     5987M   51M     5612M   1% /var/log
 # tmpfs                              197M    0M      197M   0% /run/user/1000
 # total                            30887M 1790M    27521M   7% -
+```
 
+```bash
 # script command
 read total_disk used_disk <<<$(df -BM --total | awk '/total/ {print substr($2,1,length($2)-1), substr($3,1,length($3)-1)}')
 disk_pct=$(awk "BEGIN {printf \"%.1f\", $used_disk/$total_disk*100}")
@@ -986,10 +1000,10 @@ last_boot=$(uptime -s)
 man lsblk
 # NAME
 #        lsblk - list block devices
-# 
+#
 # SYNOPSIS
 #        lsblk [options] [device...]
-# 
+#
 # DESCRIPTION
 #        lsblk lists information about all available or the specified block devices. The lsblk command reads the sysfs filesystem
 #        and udev db to gather information. If the udev db is not available or lsblk is compiled without udev support, then it
@@ -1025,23 +1039,23 @@ lvm_active=$(lsblk | grep -q " lvm " && echo "yes" || echo "no")
 man ss
 # NAME
 #        ss - another utility to investigate sockets
-# 
+#
 # SYNOPSIS
 #        ss [options] [ FILTER ]
-# 
+#
 # DESCRIPTION
 #        ss  is  used  to  dump socket statistics. It allows showing information similar to netstat.  It can display more TCP and
 #        state information than other tools.
-# 
+#
 # OPTIONS
 #        When no option is used ss displays a list of open non-listening sockets (e.g. TCP/UNIX/UDP) that have  established  con‐
 #        nection.
-# 
+#
 #        -a, --all
 #               Display both listening and non-listening (for TCP this means established connections) sockets.
 #        -t, --tcp
 #               Display TCP sockets.
-# 
+#
 # USAGE EXAMPLES
 #        ss -t -a
 #               Display all TCP sockets.
@@ -1066,10 +1080,10 @@ tcp_conn=$(ss -ta | grep ESTAB | wc -l)
 man who
 # NAME
 #        who - show who is logged on
-# 
+#
 # SYNOPSIS
 #        who [OPTION]... [ FILE | ARG1 ARG2 ]
-# 
+#
 # DESCRIPTION
 #        Print information about users who are currently logged in.
 ```
@@ -1091,7 +1105,7 @@ logged_users=$(who | wc -l)
 man hostname
 # NAME
 #        hostname - show or set the system's host name
-# 
+#
 #        -I, --all-ip-addresses
 #               Display  all network addresses of the host. This option enumerates all configured addresses on all network inter‐
 #               faces. The loopback interface and IPv6 link-local addresses are omitted. Contrary to option -i, this option  does
@@ -1115,25 +1129,25 @@ man ip-link
 #    ip link show - display device attributes
 #        dev NAME (default)
 #               NAME specifies the network device to show.
-# 
+#
 #        group GROUP
 #               GROUP specifies what group of devices to show.
-# 
+#
 #        up     only display running interfaces.
-# 
+#
 #        master DEVICE
 #               DEVICE specifies the master device which enslaves devices to show.
-# 
+#
 #        vrf NAME
 #               NAME specifies the VRF which enslaves devices to show.
-# 
+#
 #        type TYPE
 #               TYPE specifies the type of devices to show.
-# 
+#
 #               Note that the type name is not checked against the list of supported types - instead it is sent as-is to the ker‐
 #               nel. Later it is used to filter the returned interface list by comparing it with the relevant attribute in case
 #               the kernel didn't filter already. Therefore any string is accepted, but may lead to empty output.
-# 
+#
 #        nomaster
 #               only show devices with no master
 ```
@@ -1163,9 +1177,9 @@ man journalctl
 
 # DESCRIPTION
 #        journalctl may be used to query the contents of the systemd(1) journal as written by systemd-journald.service(8).
-# 
+#
 #        If called without parameters, it will show the full contents of the journal, starting with the oldest entry collected.
-# 
+#
 #        If one or more match arguments are passed, the output is filtered accordingly. A match is in the format "FIELD=VALUE",
 #        e.g.  "_SYSTEMD_UNIT=httpd.service", referring to the components of a structured journal entry. See systemd.journal-
 #        fields(7) for a list of well-known fields. If multiple matches are specified matching different fields, the log entries
@@ -1174,12 +1188,12 @@ man journalctl
 #        will show entries matching any of the specified matches for the same field. Finally, the character "+" may appear as a
 #        separate word between other terms on the command line. This causes all matches before and after to be combined in a
 #        disjunction (i.e. logical OR).
-# 
+#
 #        It is also possible to filter the entries by specifying an absolute file path as an argument. The file path may be a
 #        file or a symbolic link and the file must exist at the time of the query. If a file path refers to an executable binary,
 #        an "_EXE=" match for the canonicalized binary path is added to the query. If a file path refers to an executable script,
 #        a "_COMM=" match for the script name is added to the query. If a file path refers to a device node, "_KERNEL_DEVICE="
-#  
+#
 #        -q, --quiet
 #            Suppresses all informational messages (i.e. "-- Journal begins at ...", "-- Reboot --"), any warning messages
 #            regarding inaccessible system journals when run as a normal user.
