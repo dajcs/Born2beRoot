@@ -1,6 +1,8 @@
-# Evaluation Questions
+# Finishing you Project
 
-Create a `signature.txt` of the virtual machine image on the Host machine.
+- Shutdwon VM and close VirtuaBox.
+
+- Create a `signature.txt` of the virtual machine image on the Host machine.
 
 ```bash
 # command on Ubuntu host terminal
@@ -9,10 +11,15 @@ sha1sum ~/goinfre/Born2beRoot/Born2beRoot.vdi > signature.txt
 # check result
 cat signature.txt
 # 4070117ace51c2060df23cafb3b344c3444830b7  /home/anemet/goinfre/Born2beRoot/Born2beRoot.vdi
-
 ```
 
-# Mandatory part
+- put the `signature.txt` into the repo, push it, and mark project as finished.
+
+---
+## Important Note:
+> after making a signature and marking the project finished, make a copy of the `Born2beRoot` VM directory and store it in a safe place because during evaluation the `Born2beRoot.vdi` file is going to change, so you need the backup to restore the original version for all three evaluations.
+
+# Evaluation Questions - Mandatory part
 
 ## Project overview
 
