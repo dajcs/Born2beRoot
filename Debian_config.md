@@ -708,13 +708,13 @@ Here is the assembled result of the script: [monitoring.sh](./monitoring.sh)
 Copy the content of [monitoring.sh](./monitoring.sh) into a file in the home directory.
 
 ```bash
-sudo nano /home/monitoring.sh
+sudo nano /home/anemet/monitoring.sh
 ```
 
 Make executable
 
 ```bash
-sudo chmod +x /home/monitoring.sh
+sudo chmod +x /home/anemet/monitoring.sh
 ```
 
 Edit crontab
