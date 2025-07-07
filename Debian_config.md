@@ -71,14 +71,14 @@ sudo vim /etc/ssh/sshd_config
 ```
 
 
-Change `#Port 22` to `Port 4242` and \
-`#PermitRootLogin prohibit-password` to `PermitRootLogin no`
+Uncomment `#Port 22` and change port number to `Port 4242` and uncomment
+`#PermitRootLogin` to prohibit root ssh
 
 ```bash
-# Change #Port 22 to
+# Uncomment #Port 22 and change port number
 Port 4242
 
-# Change #PermitRootLogin prohibit-password to
+# Uncomment #PermitRootLogin to prohibit-root ssh
 PermitRootLogin no
 ```
 
